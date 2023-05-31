@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Name>Alma Primo Definitive Catalog Search</Name>
+  <Author>Atlas Systems</Author>
+  <Version>1.0.0</Version>
+  <Active>True</Active>
+  <Type>Addon</Type>
+  <Description>Catalog Search and Import Addon that uses Alma as the catalog and Primo or Primo VE as the discovery layer.</Description>
+  <Forms>
+    <Form>FormRequest</Form>
+    <Form>FormItem</Form>
+  </Forms>
+  <Settings>
+    <Setting name="CatalogURL" value="" type="string">
+      <Description>The base URL that the query strings are appended to.</Description>
+    </Setting>
+    <Setting name="HomeURL" value="" type="string">
+      <Description>Home page of the catalog.</Description>
+    </Setting>
+    <Setting name="AutoSearch" value="true" type="boolean">
+      <Description>Defines whether the search should be automatically performed when the form opens.</Description>
+    </Setting>
+    <Setting name="RemoveTrailingSpecialCharacters" value="true" type="boolean">
+      <Description>Defines whether to remove trailing special characters on import or not.</Description>
+    </Setting>
+    <Setting name="AvailableSearchTypes" value="Title,Author" type="string">
+      <Description>The types of searches your catalog supports (e.g. Title, Author, Call Number, Catalog Number)</Description>
+    </Setting>
+    <Setting name="SearchPriorityList" value="Title,Author" type="string">
+      <Description>The fields that should be searched on, in order of search priority. Each field in the string will be checked for a valid corresponding search value in the request, and the first search type with a valid corresponding value will be used.</Description>
+    </Setting>
+    <Setting name="AutoRetrieveItems" value="true" type="boolean">
+      <Description>Defines whether or not the addon should automatically retrieve items related to a record being viewed.</Description>
+    </Setting>
+    <Setting name="AlmaAPIURL" value="https://api-na.hosted.exlibrisgroup.com/almaws/v1/" type="string">
+      <Description>The URL to the Alma API</Description>
+    </Setting>
+    <Setting name="AlmaAPIKey" value="" type="string">
+      <Description>API key used for interacting with the Alma API.</Description>
+    </Setting>
+    <Setting name="PrimoSiteCode" value="" type="string">
+      <Description>The code that identifies the site in Primo Deep Links. Ex: vid={PrimoSiteCode}</Description>
+    </Setting>
+    <Setting name="IdSuffix" value="" type="string">
+      <Description>The last four digits of MMS IDs and IE IDs for your institution.</Description>
+    </Setting>
+  </Settings>
+  <Files>
+    <File>Catalog.lua</File>
+    <File>DataMapping.lua</File>
+    <File>CustomizedMapping.lua</File>
+    <File>WebClient.lua</File>
+    <File>AlmaApi.lua</File>
+  </Files>
+</Configuration>

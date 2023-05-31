@@ -239,6 +239,10 @@ Atlas welcomes developers to extend the addon with additional support. All pull 
 
 * **Config.xml** - The addon configuration file.
 
+* **CatalogLayout_Browse.xml** - The layout file used when not retrieving items on a record page. Displays the full browser window.
+
+* **CatalogLayout_Import.xml** - The layout file used when retrieving items on a record page (either automatically or via the Retrieve Items button). Displays the items grid at the bottom of the window.
+
 * **DataMapping.lua** - The data mapping file contains mappings for the items that do not typically change from site to site.
 
 * **CustomizedMapping.lua** - The a data mapping file that contains settings that are more site specific and likely to change (e.g. location codes).

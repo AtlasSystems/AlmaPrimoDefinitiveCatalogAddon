@@ -18,8 +18,8 @@ AlmaApi = AlmaApiInternal;
 local function RetrieveHoldingsList( mmsId )
     local requestUrl = AlmaApiInternal.ApiUrl .."bibs/"..
         Utility.URLEncode(mmsId) .."/holdings?apikey=" .. Utility.URLEncode(AlmaApiInternal.ApiKey);
+
     local headers = {"Accept: application/xml", "Content-Type: application/xml"};
-    log:DebugFormat("Request URL: {0}", requestUrl);
     local response = WebClient.GetRequest(requestUrl, headers);
 
     return WebClient.ReadResponse(response);
@@ -29,9 +29,8 @@ end
 local function RetrieveBibs(id, idType)
     local requestUrl = AlmaApiInternal.ApiUrl .. "bibs?apikey="..
         Utility.URLEncode(AlmaApiInternal.ApiKey) .. "&" .. idType .. "=" .. Utility.URLEncode(id);
-    local headers = {"Accept: application/xml", "Content-Type: application/xml"};
-    log:DebugFormat("Request URL: {0}", requestUrl);
 
+    local headers = {"Accept: application/xml", "Content-Type: application/xml"};
     local response = WebClient.GetRequest(requestUrl, headers);
 
     return WebClient.ReadResponse(response);
@@ -43,8 +42,6 @@ local function RetrieveItemsSublist(mmsId, holdingId, offset )
         Utility.URLEncode(AlmaApiInternal.ApiKey);
 
     local headers = {"Accept: application/xml", "Content-Type: application/xml"};
-
-    log:DebugFormat("Request URL: {0}", requestUrl);
     local response = WebClient.GetRequest(requestUrl, headers);
 	
     return WebClient.ReadResponse(response);
@@ -85,8 +82,6 @@ local function RetrieveHoldingsRecordInfo(mmsId, holdingId)
         Utility.URLEncode(AlmaApiInternal.ApiKey);
 
     local headers = {"Accept: application/xml", "Content-Type: application/xml"};
-
-    log:DebugFormat("Request URL: {0}", requestUrl);
     local response = WebClient.GetRequest(requestUrl, headers);
     
     return WebClient.ReadResponse(response);

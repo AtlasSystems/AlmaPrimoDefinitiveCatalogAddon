@@ -13,24 +13,23 @@ local log = types["log4net.LogManager"].GetLogger(rootLogger .. ".AlmaApi");
 local function GetRequest(requestUrl, headers)
     local webClient = types["System.Net.WebClient"]();
     local response = nil;
-    log:Debug("Created Web Client");
     webClient.Encoding = types["System.Text.Encoding"].UTF8;
 
     for _, header in ipairs(headers) do
         webClient.Headers:Add(header);
     end
-
+    
+    log:DebugFormat("Request URL: {0}", requestUrl);
     local success, error = pcall(function ()
         response = webClient:DownloadString(requestUrl);
     end);
 
     webClient:Dispose();
-    log:Debug("Disposed Web Client");
 
     if(success) then
         return response;
     else
-        log:InfoFormat("Unable to get response from the request url: {0}", error);
+        log:ErrorFormat("Unable to get response from the request url: {0}", error);
     end
 end
 
@@ -46,11 +45,11 @@ local function ReadResponse( responseString )
         if (documentLoaded) then
             return responseDocument;
         else
-            log:InfoFormat("Unable to load response content as XML: {0}", error);
+            log:WarnFormat("Unable to load response content as XML: {0}", error);
             return nil;
         end
     else
-        log:Info("Unable to read response content");
+        log:Warn("Unable to read response content.");
     end
 
     return nil;

@@ -1,4 +1,4 @@
-# Alma Primo VE Catalog Search
+# Alma Primo Definitive Catalog Search
 
 ## Versions
 

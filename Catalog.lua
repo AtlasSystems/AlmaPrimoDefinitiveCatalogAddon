@@ -226,7 +226,7 @@ function GetMmsIds()
 
     local itemDetails = catalogSearchForm.Browser:EvaluateScript([[document.getElementById("item-details").innerText;]]).Result;
     local ids = {};
-    if itemDetails and itemDetails ~= nil then
+    if itemDetails then
         ids = ExtractIds(itemDetails);
     else
         log:Debug("Element with ID 'item-details' not found.");

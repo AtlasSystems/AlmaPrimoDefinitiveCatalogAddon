@@ -58,6 +58,12 @@ local cursors = types["System.Windows.Forms.Cursors"];
 local watcherEnabled = false;
 local recordsLastRetrievedFrom = "";
 local layoutMode = "browse";
+local browserType = nil;
+if AddonInfo.Browsers ~= nil and AddonInfo.Browsers.WebView2 ~= nil and AddonInfo.Browsers.WebView2 == true then
+    browserType = "WebView2";
+else
+    browserType = "Chromium";
+end
 
 function Init()
     interfaceMngr = GetInterfaceManager();
@@ -67,8 +73,7 @@ function Init()
     log:DebugFormat("catalogSearchForm.Form = {0}", catalogSearchForm.Form);
 
     -- Add a browser
-    catalogSearchForm.Browser = catalogSearchForm.Form:CreateBrowser(DataMapping.LabelName, "Catalog Search Browser", DataMapping.LabelName, "WebView2");
-    log:DebugFormat("catalogSearchForm.Browser = {0}", catalogSearchForm.Browser);
+    catalogSearchForm.Browser = catalogSearchForm.Form:CreateBrowser(DataMapping.LabelName, "Catalog Search Browser", DataMapping.LabelName, browserType);
 
     -- Since we didn't create a ribbon explicitly before creating our browser, it will have created one using the name we passed the CreateBrowser method.  We can retrieve that one and add our buttons to it.
     catalogSearchForm.RibbonPage = catalogSearchForm.Form:GetRibbonPage(DataMapping.LabelName);
@@ -98,7 +103,7 @@ function Init()
     catalogSearchForm.ImportButton.BarButton.Enabled = false;
 
     BuildItemsGrid();
-    catalogSearchForm.Form:LoadLayout("CatalogLayout_Browse.xml");
+    catalogSearchForm.Form:LoadLayout("CatalogLayout_Browse_" .. browserType .. ".xml");
 
     -- After we add all of our buttons and form elements, we can show the form.
     catalogSearchForm.Form:Show();
@@ -245,6 +250,7 @@ end
 function ExtractIds(itemDetails)
     local idMatches = {};
     local urlId = (catalogSearchForm.Browser.Address):match("%d+" .. settings.IdSuffix);
+    -- Easy way to prevent duplicates regardless of order since the keys get overwritten.
     idMatches[urlId] = true;
 
     -- MMS Ids (and presumably IE IDs) all have the same last four digits specific to the institution.
@@ -252,7 +258,6 @@ function ExtractIds(itemDetails)
 
     log:Info("Extracting IDs from item-details element.");
     for id in itemDetails:gmatch("%d+" .. settings.IdSuffix) do
-        -- Easy way to prevent duplicates regardless of order since the keys get overwritten.
         if id:find("^99") or id:find("^[125]1") then
             log:DebugFormat("Found ID: {0}", id);
             idMatches[id] = true;
@@ -303,22 +308,10 @@ end
 
 function IsRecordPageLoaded()
     local pageUrl = catalogSearchForm.Browser.Address;
+    local itemDetails = catalogSearchForm.Browser:EvaluateScript([[document.getElementById("item-details").innerText;]]).Result;
 
-    if pageUrl:find("fulldisplay%?") then
+    if pageUrl:find("fulldisplay%?") and itemDetails then
         log:DebugFormat("Is a record page. {0}", pageUrl);
-
-        local mmsIds = {};
-        if not mmsIdsCache[pageUrl] then
-            mmsIdsCache[pageUrl] = GetMmsIds();
-        end
-        mmsIds = mmsIdsCache[pageUrl];
-
-        if #mmsIds == 0 then
-            log:Debug("Linked Data not loaded.");
-            StartRecordPageWatcher();
-            ToggleItemsUIElements(false);
-            return false;
-        end
         return true;
     else
         log:DebugFormat("Is not a record page. {0}", pageUrl);
@@ -389,7 +382,7 @@ function ToggleItemsUIElements(enabled)
 
         if layoutMode == "import" then
             layoutMode = "browse";
-            catalogSearchForm.Form:LoadLayout("CatalogLayout_Browse.xml");
+            catalogSearchForm.Form:LoadLayout("CatalogLayout_Browse_" .. browserType .. ".xml");
         end
     end
     log:Debug("Finished Toggling UI Elements");
@@ -490,14 +483,14 @@ function RetrieveItems()
     cursor.Current = cursors.WaitCursor;
     if layoutMode == "browse" then
         layoutMode = "import";
-        catalogSearchForm.Form:LoadLayout("CatalogLayout_Import.xml");
+        catalogSearchForm.Form:LoadLayout("CatalogLayout_Import_" .. browserType .. ".xml");
     end
     
     local pageUrl = catalogSearchForm.Browser.Address;
     local mmsIds = {};
     
     if not mmsIdsCache[pageUrl] then
-        mmsIds = GetMmsIds();
+        mmsIdsCache[pageUrl] = GetMmsIds();
     end
     mmsIds = mmsIdsCache[pageUrl];
 

@@ -213,9 +213,15 @@ function PerformSearch(searchInfo)
     end
 
     local searchUrl = "";
+    local encodedSiteCode = Utility.URLEncode(settings.PrimoSiteCode):gsub("%%", "%%%%");
+    local encodedSearchType = Utility.URLEncode(DataMapping.SearchTypes[searchInfo[1]]["PrimoField"]):gsub("%%", "%%%%");
+    local encodedSearchTerm = Utility.URLEncode(searchTerm):gsub("%%", "%%%%");
 
     --Construct the search url based on the base catalog url and search style.
-    searchUrl = settings.CatalogUrl .. DataMapping.SearchStyleUrls[searchInfo[2]]:gsub("{PrimoSiteCode}", settings.PrimoSiteCode):gsub("{SearchType}", DataMapping.SearchTypes[searchInfo[1]]["PrimoField"]):gsub("{SearchTerm}", Utility.URLEncode(searchTerm));
+    searchUrl = settings.CatalogUrl .. DataMapping.SearchStyleUrls[searchInfo[2]]
+    :gsub("{PrimoSiteCode}", encodedSiteCode)
+    :gsub("{SearchType}", encodedSearchType)
+    :gsub("{SearchTerm}", encodedSearchTerm);
     
     log:InfoFormat("Navigating to {0}", searchUrl);
     catalogSearchForm.Browser:Navigate(searchUrl);

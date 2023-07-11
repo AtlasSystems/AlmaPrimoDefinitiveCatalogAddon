@@ -3,6 +3,7 @@ DataMapping.Icons = {};
 DataMapping.SearchTypes = {};
 DataMapping.SearchStyleUrls = {};
 DataMapping.SourceFields = {};
+DataMapping.ImportProfiles = {};
 DataMapping.ImportFields = {};
 DataMapping.ImportFields.Bibliographic = {};
 DataMapping.ImportFields.Holding = {};
@@ -18,7 +19,6 @@ DataMapping.Icons["Aeon"] = {};
 DataMapping.Icons["Aeon"]["Home"] = "home_32x32";
 DataMapping.Icons["Aeon"]["Web"] = "web_32x32";
 DataMapping.Icons["Aeon"]["Retrieve Items"] = "record_32x32";
-DataMapping.Icons["Aeon"]["Import"] = "impt_32x32";
 
 --[[ 
     SearchTypes
@@ -87,10 +87,25 @@ DataMapping.SearchStyleUrls["Browse"] = "browse?vid={PrimoSiteCode}&browseQuery=
 DataMapping.SourceFields["Aeon"] = {};
 DataMapping.SourceFields["Aeon"]["TransactionNumber"] = { Table = "Transaction", Field = "TransactionNumber" };
 
+--[[
+Import Profiles
+Each import profile defines a set of fields to be imported. A button will be generated for each
+profile with a Product property matching the product you're using. The key for the import profile
+must have a corresponding set of import fields with matching keys in the next section.
+    - ButtonText: The text that appears on the ribbon button for the import.
+    - Product: The product the import profile is for.
+    - Icon: The name of the icon file to use as the button's image.
+--]]
 
--- Import Fields: The table for each ImportFields section must be defined for the product (Aeon, ILLiad, or Ares) 
+DataMapping.ImportProfiles["Default"] = {
+    ButtonText = "Import",
+    Product = "Aeon",
+    Icon = "impt_32x32"
+}
+
+-- Import Fields: The table for each ImportFields section must be defined for each import profile above.
     -- running the addon to work properly, even if it is empty. Example of an empty ImportFields table:
-        -- DataMapping.ImportFields.Bibliographic["Aeon"] = { };
+        -- DataMapping.ImportFields.Bibliographic["Default"] = { };
 
 --[[ 
     Bib-level import fields.
@@ -101,7 +116,7 @@ DataMapping.SourceFields["Aeon"]["TransactionNumber"] = { Table = "Transaction",
         in parentheses next to the field type.
     - Value must be an XPath expression.
     --]]
-DataMapping.ImportFields.Bibliographic["Aeon"] = {
+DataMapping.ImportFields.Bibliographic["Default"] = {
     {
         Table = "Transaction",
         Field = "ItemTitle", MaxSize = 255,
@@ -140,12 +155,12 @@ DataMapping.ImportFields.Bibliographic["Aeon"] = {
 };
 
 -- Holding-level import fields. Value must be an XPath expression.
-    DataMapping.ImportFields.Holding["Aeon"] = {
+    DataMapping.ImportFields.Holding["Default"] = {
 
 }
 
 -- Item-level import fields. Value should not be changed.
-DataMapping.ImportFields.Item["Aeon"] = {
+DataMapping.ImportFields.Item["Default"] = {
     {
         Table = "Transaction",
         Field = "ReferenceNumber", MaxSize = 50,

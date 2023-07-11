@@ -22,7 +22,7 @@ catalogSearchForm.Form = nil;
 catalogSearchForm.Browser = nil;
 catalogSearchForm.RibbonPage = nil;
 catalogSearchForm.ItemsButton = nil;
-catalogSearchForm.ImportButton = nil;
+catalogSearchForm.ImportButtons = {};
 catalogSearchForm.SearchButtons = {};
 
 local mmsIdsCache = {};
@@ -59,7 +59,7 @@ local watcherEnabled = false;
 local recordsLastRetrievedFrom = "";
 local layoutMode = "browse";
 local browserType = nil;
-if AddonInfo.Browsers ~= nil and AddonInfo.Browsers.WebView2 ~= nil and AddonInfo.Browsers.WebView2 == true then
+if AddonInfo.Browsers and AddonInfo.Browsers.WebView2 then
     browserType = "WebView2";
 else
     browserType = "Chromium";
@@ -82,25 +82,40 @@ function Init()
     catalogSearchForm.SearchButtons["Home"] = catalogSearchForm.RibbonPage:CreateButton("New Search", GetClientImage(DataMapping.Icons[product]["Web"]), "ShowCatalogHome", "Search Options");
 
     log:Info("Creating buttons for available search types.");
-    for _, searchType in ipairs(settings.AvailableSearchTypes) do
-        local searchStyle = DataMapping.SearchTypes[searchType].SearchStyle;
+    local success, err = pcall(function()
+        for _, searchType in ipairs(settings.AvailableSearchTypes) do
+            local searchStyle = DataMapping.SearchTypes[searchType].SearchStyle;
 
-        log:DebugFormat("Creating button for search type {0} with search style {1}", searchType, searchStyle);
+            log:DebugFormat("Creating button for search type {0} with search style {1}", searchType, searchStyle);
 
-        catalogSearchForm.SearchButtons[searchType] = catalogSearchForm.RibbonPage:CreateButton(DataMapping.SearchTypes[searchType].ButtonText, GetClientImage(DataMapping.SearchTypes[searchType][product .. "Icon"]), "Placeholder", "Search Options");
+            catalogSearchForm.SearchButtons[searchType] = catalogSearchForm.RibbonPage:CreateButton(DataMapping.SearchTypes[searchType].ButtonText, GetClientImage(DataMapping.SearchTypes[searchType][product .. "Icon"]), "Placeholder", "Search Options");
 
-        catalogSearchForm.SearchButtons[searchType].BarButton:add_ItemClick(ButtonSearch);
-        catalogSearchForm.SearchButtons[searchType].BarButton.Tag = {SearchType = searchType, SearchStyle = searchStyle};
+            catalogSearchForm.SearchButtons[searchType].BarButton:add_ItemClick(ButtonSearch);
+            catalogSearchForm.SearchButtons[searchType].BarButton.Tag = {SearchType = searchType, SearchStyle = searchStyle};
+        end
+    end);
+    if not success then
+        log:ErrorFormat("{0}. Search types may be configured incorrectly. Please ensure SearchTypes exist in DataMapping.lua for each search type in the AvailableSearchTypes setting.", TraverseError(err));
+        interfaceMngr:ShowMessage("Search types may be configured incorrectly. Please ensure SearchTypes exist in DataMapping.lua for each search type in the AvailableSearchTypes setting. See client log for details.", "Configuration Error");
+    end
+
+    log:Info("Creating buttons for import profiles.");
+    for importProfileName, importProfile in pairs(DataMapping.ImportProfiles) do
+        if importProfile.Product == product then
+            log:DebugFormat("Creating button for import profile {0}", importProfileName);
+
+            catalogSearchForm.ImportButtons[importProfileName] = catalogSearchForm.RibbonPage:CreateButton(DataMapping.ImportProfiles[importProfileName].ButtonText, GetClientImage(DataMapping.ImportProfiles[importProfileName].Icon), "Placeholder", "Process");
+
+            catalogSearchForm.ImportButtons[importProfileName].BarButton:add_ItemClick(DoItemImport);
+            catalogSearchForm.ImportButtons[importProfileName].BarButton.Tag = {ImportProfileName = importProfileName};
+            catalogSearchForm.ImportButtons[importProfileName].BarButton.Enabled = false;
+        end
     end
 
     if (not settings.AutoRetrieveItems) then
         catalogSearchForm.ItemsButton = catalogSearchForm.RibbonPage:CreateButton("Retrieve Items", GetClientImage(DataMapping.Icons[product]["Retrieve Items"]), "RetrieveItems", "Process");
         catalogSearchForm.ItemsButton.BarButton.ItemShortcut = types["DevExpress.XtraBars.BarShortcut"](types["System.Windows.Forms.Shortcut"].CtrlR);
     end
-
-    catalogSearchForm.ImportButton = catalogSearchForm.RibbonPage:CreateButton("Import", GetClientImage(DataMapping.Icons[product]["Import"]), "DoItemImport", "Process");
-    catalogSearchForm.ImportButton.BarButton.ItemShortcut = types["DevExpress.XtraBars.BarShortcut"](types["System.Windows.Forms.Shortcut"].CtrlI);
-    catalogSearchForm.ImportButton.BarButton.Enabled = false;
 
     BuildItemsGrid();
     catalogSearchForm.Form:LoadLayout("CatalogLayout_Browse_" .. browserType .. ".xml");
@@ -257,7 +272,10 @@ function ExtractIds(itemDetails)
     local idMatches = {};
     local urlId = (catalogSearchForm.Browser.Address):match("%d+" .. settings.IdSuffix);
     -- Easy way to prevent duplicates regardless of order since the keys get overwritten.
-    idMatches[urlId] = true;
+    -- In rare cases the URL won't contain an ID.
+    if urlId then
+        idMatches[urlId] = true;
+    end
 
     -- MMS Ids (and presumably IE IDs) all have the same last four digits specific to the institution.
     -- 99 is the prefix for MMS IDs, and IE IDs always have 1, 2, or 5 as their first digit and 1 as the second digit.
@@ -372,7 +390,9 @@ function ToggleItemsUIElements(enabled)
             -- If there's an item in the Item Grid
             if(catalogSearchForm.Grid.GridControl.MainView.FocusedRowHandle > -1) then
                 catalogSearchForm.Grid.GridControl.Enabled = true;
-                catalogSearchForm.ImportButton.BarButton.Enabled = true;
+                for buttonName, _ in pairs(catalogSearchForm.ImportButtons) do
+                    catalogSearchForm.ImportButtons[buttonName].BarButton.Enabled = true;
+                end
             end
         end
     else
@@ -380,7 +400,9 @@ function ToggleItemsUIElements(enabled)
         ClearItems();
         recordsLastRetrievedFrom = "";
         catalogSearchForm.Grid.GridControl.Enabled = false;
-        catalogSearchForm.ImportButton.BarButton.Enabled = false;
+        for buttonName, _ in pairs(catalogSearchForm.ImportButtons) do
+            catalogSearchForm.ImportButtons[buttonName].BarButton.Enabled = false;
+        end
 
         if (not settings.AutoRetrieveItems) then
             catalogSearchForm.ItemsButton.BarButton.Enabled = false;
@@ -478,10 +500,14 @@ end
 
 function ItemsGridFocusedRowChanged(sender, args)
     if (args.FocusedRowHandle > -1) then
-        catalogSearchForm.ImportButton.BarButton.Enabled = true;
+        for buttonName, _ in pairs(catalogSearchForm.ImportButtons) do
+            catalogSearchForm.ImportButtons[buttonName].BarButton.Enabled = true;
+        end
         catalogSearchForm.Grid.GridControl.Enabled = true;
     else
-        catalogSearchForm.ImportButton.BarButton.Enabled = false;
+        for buttonName, _ in pairs(catalogSearchForm.ImportButtons) do
+            catalogSearchForm.ImportButtons[buttonName].BarButton.Enabled = false;
+        end
     end;
 end
 
@@ -653,8 +679,10 @@ function PopulateItemsDataSources( response, itemsDataTable )
     catalogSearchForm.Grid.GridControl:EndUpdate();
 end
 
-function DoItemImport()
+function DoItemImport(sender, args)
     cursor.Current = cursors.WaitCursor;
+
+    local importProfileName = args.Item.Tag.ImportProfileName;
 
     log:Debug("Retrieving import row.");
     local importRow = catalogSearchForm.Grid.GridControl.MainView:GetFocusedRow();
@@ -665,18 +693,24 @@ function DoItemImport()
     end;
 
     log:Info("Importing item values.");
-    for _, target in ipairs(DataMapping.ImportFields.Item[product]) do
-        local importValue = importRow:get_Item(target.Value);
+    local success, err = pcall(function()
+        for _, target in ipairs(DataMapping.ImportFields.Item[importProfileName]) do
+            local importValue = importRow:get_Item(target.Value);
 
-        log:DebugFormat("Importing value '{0}' to {1}", importValue, target.Field);
-        ImportField(target.Table, target.Field, importValue, target.MaxSize);
+            log:DebugFormat("Importing value '{0}' to {1}", importValue, target.Field);
+            ImportField(target.Table, target.Field, importValue, target.MaxSize);
+        end
+    end);
+    if not success then
+        log:ErrorFormat("{0}. Import profiles may not be configured correctly. Please ensure that each import profile in DataMapping.lua corresponds to a set of item import fields.", TraverseError(err));
+        interfaceMngr:ShowMessage("Import profiles may not be configured correctly. Please ensure that each import profile in DataMapping.lua corresponds to a set of item import fields. See client log for details.", "Configuration Error");
     end
 
     local mmsId = importRow:get_Item("ReferenceNumber");
     local holdingId = importRow:get_Item("HoldingId");
 
-    local holdingInformation = GetMarcInformation(mmsId, holdingId);
-    local bibliographicInformation = GetMarcInformation(mmsId);
+    local holdingInformation = GetMarcInformation(importProfileName, mmsId, holdingId);
+    local bibliographicInformation = GetMarcInformation(importProfileName, mmsId);
 
     log:Info("Importing bib values.");
     for _, target in ipairs(bibliographicInformation) do
@@ -694,7 +728,7 @@ function DoItemImport()
     ExecuteCommand("SwitchTab", "Detail");
 end
 
-function GetMarcInformation(mmsId, holdingId)
+function GetMarcInformation(importProfileName, mmsId, holdingId)
     local marcInformation = {};
 
     local marcXmlDoc = nil;
@@ -719,9 +753,9 @@ function GetMarcInformation(mmsId, holdingId)
             -- Loops through each import mapping
             local mappingTable = {};
             if holdingId then
-                mappingTable = DataMapping.ImportFields.Holding[product];
+                mappingTable = DataMapping.ImportFields.Holding[importProfileName];
             else
-                mappingTable = DataMapping.ImportFields.Bibliographic[product];
+                mappingTable = DataMapping.ImportFields.Bibliographic[importProfileName];
             end
 
             for _, target in ipairs(mappingTable) do
@@ -776,12 +810,11 @@ end
 function TraverseError(e)
     if not e.GetType then
         -- Not a .NET type
-        return nil;
+        return e;
     else
         if not e.Message then
             -- Not a .NET exception
-            log:Debug(e:ToString());
-            return nil;
+            return e;
         end
     end
 

@@ -89,13 +89,6 @@ DataMapping.SearchTypes["Author"] = {
     AeonIcon = "srch_32x32",
     AeonSourceField = { Table = "Transaction", Field = "ItemAuthor" }
 };
-DataMapping.SearchTypes["Call Number"] = {
-    ButtonText = "Call Number",
-    PrimoField = "lsr01",
-    SearchStyle = "Query",
-    AeonIcon = "srch_32x32",
-    AeonSourceField = { Table = "Transaction", Field = "CallNumber" }
-};
 DataMapping.SearchTypes["ISBN"] = {
     ButtonText = "ISBN",
     PrimoField = "isbn",
@@ -119,7 +112,7 @@ DataMapping.SearchTypes["Catalog Number"] = {
 };
 ```
 
->**Note:** The *Catalog Number* search type performs an `any` search because Primo does not have a search type for MMS ID.
+>**Note:** The *Catalog Number* search type performs an `any` search because Primo does not have a search type for MMS ID by default.
 
 ### Source Fields
 The field that the addon reads from for values used by the addon that are not used in searches.
@@ -131,6 +124,19 @@ The field that the addon reads from for values used by the addon that are not us
 ```lua
 DataMapping.SourceFields["Aeon"] = {};
 DataMapping.SourceFields["Aeon"]["TransactionNumber"] = { Table = "Transaction", Field = "TransactionNumber" };
+```
+
+### Import Profiles
+Similar to SearchTypes, custom import profiles can be configured. Each import profile in DataMapping.lua will generate an import button with the ButtonText as its label. Each import profile must correspond to a set of bibliographic, holding, and item import fields with matching keys.
+
+*Default Configuration:*
+
+```lua
+DataMapping.ImportProfiles["Default"] = {
+    ButtonText = "Import",
+    Product = "Aeon",
+    Icon = "impt_32x32"
+}
 ```
 
 ### Bibliographic Import
@@ -150,7 +156,7 @@ The information within this data mapping is used import the correct information 
 *Default Configuration:*
 
 ```lua
-DataMapping.ImportFields.Item["Aeon"] = {
+DataMapping.ImportFields.Item["Default"] = {
     {
         Table = "Transaction",
         Field = "ReferenceNumber", MaxSize = 50,

@@ -35,35 +35,35 @@ DataMapping.SearchTypes["Title"] = {
     PrimoField = "title",
     SearchStyle = "Query",
     AeonIcon = "srch_32x32",
-    AeonSourceField = { Table = "Transaction", Field = "ItemTitle" }
+    AeonSourceField = { Table = "Transaction", Field = "ItemTitle" },
 };
 DataMapping.SearchTypes["Author"] = {
     ButtonText = "Author",
     PrimoField = "creator",
     SearchStyle = "Query",
     AeonIcon = "srch_32x32",
-    AeonSourceField = { Table = "Transaction", Field = "ItemAuthor" }
+    AeonSourceField = { Table = "Transaction", Field = "ItemAuthor" },
 };
 DataMapping.SearchTypes["Call Number"] = {
     ButtonText = "Call Number",
     PrimoField = "lsr01",
     SearchStyle = "Query",
     AeonIcon = "srch_32x32",
-    AeonSourceField = { Table = "Transaction", Field = "CallNumber" }
+    AeonSourceField = { Table = "Transaction", Field = "CallNumber" },
 };
 DataMapping.SearchTypes["ISBN"] = {
     ButtonText = "ISBN",
     PrimoField = "isbn",
     SearchStyle = "Query",
     AeonIcon = "srch_32x32",
-    AeonSourceField = { Table = "Transaction", Field = "ItemISxN" }
+    AeonSourceField = { Table = "Transaction", Field = "ItemISxN" },
 };
 DataMapping.SearchTypes["ISSN"] = {
     ButtonText = "ISSN",
     PrimoField = "issn",
     SearchStyle = "Query",
     AeonIcon = "srch_32x32",
-    AeonSourceField = { Table = "Transaction", Field = "ItemISxN" }
+    AeonSourceField = { Table = "Transaction", Field = "ItemISxN" },
 };
 -- Catalog Number uses the Any search type because Primo catalogs don't have built in MMS ID searching.
 DataMapping.SearchTypes["Catalog Number"] = {
@@ -71,7 +71,7 @@ DataMapping.SearchTypes["Catalog Number"] = {
     PrimoField = "any",
     SearchStyle = "Query",
     AeonIcon = "srch_32x32",
-    AeonSourceField = { Table = "Transaction", Field = "ReferenceNumber" }
+    AeonSourceField = { Table = "Transaction", Field = "ReferenceNumber" },
 };
 
 -- SearchStyleUrls

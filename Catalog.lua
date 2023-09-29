@@ -29,6 +29,7 @@ local mmsIdsCache = {};
 local holdingsXmlDocCache = {};
 local itemsXmlDocCache = {};
 
+luanet.load_assembly("System");
 luanet.load_assembly("System.Data");
 luanet.load_assembly("System.Drawing");
 luanet.load_assembly("System.Xml");
@@ -48,6 +49,7 @@ types["System.DBNull"] = luanet.import_type("System.DBNull");
 types["System.Windows.Forms.Application"] = luanet.import_type("System.Windows.Forms.Application");
 types["System.Xml.XmlDocument"] = luanet.import_type("System.Xml.XmlDocument");
 types["log4net.LogManager"] = luanet.import_type("log4net.LogManager");
+types["System.Timers.Timer"] = luanet.import_type("System.Timers.Timer");
 
 local rootLogger = "AtlasSystems.Addons.AlmaPrimoDefinitiveCatalogSearch";
 local log = types["log4net.LogManager"].GetLogger(rootLogger);
@@ -56,6 +58,7 @@ local product = types["System.Windows.Forms.Application"].ProductName;
 local cursor = types["System.Windows.Forms.Cursor"];
 local cursors = types["System.Windows.Forms.Cursors"];
 local watcherEnabled = false;
+local pageWatcherTimer = nil;
 local recordsLastRetrievedFrom = "";
 local layoutMode = "browse";
 local browserType = nil;
@@ -115,6 +118,7 @@ function Init()
     if (not settings.AutoRetrieveItems) then
         catalogSearchForm.ItemsButton = catalogSearchForm.RibbonPage:CreateButton("Retrieve Items", GetClientImage(DataMapping.Icons[product]["Retrieve Items"]), "RetrieveItems", "Process");
         catalogSearchForm.ItemsButton.BarButton.ItemShortcut = types["DevExpress.XtraBars.BarShortcut"](types["System.Windows.Forms.Shortcut"].CtrlR);
+        catalogSearchForm.ItemsButton.BarButton.Enabled = false;
     end
 
     BuildItemsGrid();
@@ -130,6 +134,8 @@ function Init()
     -- Search when opened if autoSearch is true
     local transactionNumber = GetFieldValue(DataMapping.SourceFields[product]["TransactionNumber"].Table, DataMapping.SourceFields[product]["TransactionNumber"].Field);
 
+	OnFormClosing:RegisterFormClosingEvent(interfaceMngr, StopRecordPageWatcher);
+
     if settings.AutoSearch and transactionNumber and transactionNumber > 0 then
         log:Debug("Performing AutoSearch");
 
@@ -143,7 +149,8 @@ end
 function StopRecordPageWatcher()
     if watcherEnabled then
         log:Debug("Stopping record page watcher.");
-        catalogSearchForm.Browser:StopPageWatcher();
+        pageWatcherTimer:Stop();
+		pageWatcherTimer:Dispose();
 
         watcherEnabled = false;
     end
@@ -153,22 +160,24 @@ function StartRecordPageWatcher()
     if not watcherEnabled then
         log:Debug("Starting record page watcher.");
 
-        local checkIntervalMilliseconds = 3000; -- 3 seconds
-        local maxWatchTimeMilliseconds = 300000; -- 5 minutes
-        catalogSearchForm.Browser:StartPageWatcher(checkIntervalMilliseconds, maxWatchTimeMilliseconds);
+        pageWatcherTimer = types["System.Timers.Timer"](3000);
+        -- This ensures the pagetWatcherTimer's Elapsed event is raised on the browser's UI thread,
+        -- which is necessary to be able to change layouts and display the grid.
+        pageWatcherTimer.SynchronizingObject = catalogSearchForm.Browser.WebBrowser;
+
+		pageWatcherTimer:add_Elapsed(IsRecordPageLoaded);
+		pageWatcherTimer:Start();
 
         watcherEnabled = true;
     end
 end
 
-function InitializeRecordPageHandler()
-    catalogSearchForm.Browser:RegisterPageHandler("custom", "IsRecordPageLoaded", "RecordPageHandler", false);
-
-    StartRecordPageWatcher();
-end
-
 function ShowCatalogHome()
-    InitializeRecordPageHandler();
+    if layoutMode == "import" then
+        layoutMode = "browse";
+        catalogSearchForm.Form:LoadLayout("CatalogLayout_Browse_" .. browserType .. ".xml");
+    end
+    StartRecordPageWatcher();
     catalogSearchForm.Browser:Navigate(settings.HomeUrl);
 end
 
@@ -209,7 +218,11 @@ end
 
 -- searchInfo is a Lua table where index 1 = searchType and index 2 = searchStyle
 function PerformSearch(searchInfo)
-    InitializeRecordPageHandler();
+    if layoutMode == "import" then
+        layoutMode = "browse";
+        catalogSearchForm.Form:LoadLayout("CatalogLayout_Browse_" .. browserType .. ".xml");
+    end
+    StartRecordPageWatcher();
 
     if searchInfo[1] == nil then
         searchInfo = GetAutoSearchInfo();
@@ -332,24 +345,23 @@ end
 
 function IsRecordPageLoaded()
     local pageUrl = catalogSearchForm.Browser.Address;
-    local itemDetails = catalogSearchForm.Browser:EvaluateScript([[document.getElementById("item-details").innerText;]]).Result;
+    local itemDetailsScript = [[(function(){
+        var itemDetailsElement = document.getElementById("item-details");
+        if (itemDetailsElement != null){
+            return "True";
+        }
+        return "False";
+    })();]];
+
+    local itemDetails = catalogSearchForm.Browser:EvaluateScript(itemDetailsScript).Result == "True";
 
     if pageUrl:find("fulldisplay%?") and itemDetails then
         log:DebugFormat("Is a record page. {0}", pageUrl);
-        return true;
+        ToggleItemsUIElements(true);
     else
         log:DebugFormat("Is not a record page. {0}", pageUrl);
         ToggleItemsUIElements(false);
-        return false;
     end
-end
-
-function RecordPageHandler()
-    --The record page has been loaded. We now need to wait to see when the holdings information comes in.
-    ToggleItemsUIElements(true);
-
-    --Re-initialize the record page handler in case the user navigates away from a record page to search again
-    InitializeRecordPageHandler();
 end
 
 function Truncate(value, size)
@@ -517,7 +529,7 @@ function RetrieveItems()
         layoutMode = "import";
         catalogSearchForm.Form:LoadLayout("CatalogLayout_Import_" .. browserType .. ".xml");
     end
-    
+
     local pageUrl = catalogSearchForm.Browser.Address;
     local mmsIds = {};
     
@@ -674,7 +686,7 @@ function PopulateItemsDataSources( response, itemsDataTable )
 
         itemsDataTable.Rows:Add(itemRow);
     end
-
+        
     catalogSearchForm.Grid.GridControl.DataSource = itemsDataTable;
     catalogSearchForm.Grid.GridControl:EndUpdate();
 end

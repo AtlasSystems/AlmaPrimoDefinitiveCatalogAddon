@@ -125,37 +125,52 @@ DataMapping.ImportFields.Bibliographic["Default"] = {
     {
         Table = "Transaction",
         Field = "ItemAuthor", MaxSize = 255,
-        Value = "//datafield[@tag='100']/subfield[@code='a']|//datafield[@tag='100']/subfield[@code='b'],//datafield[@tag='110']/subfield[@code='a']|//datafield[@tag='110']/subfield[@code='b'],//datafield[@tag='111']/subfield[@code='a']|//datafield[@tag='111']/subfield[@code='b']"
-    },
-    {
-        Table = "Transaction",
-        Field ="ItemPublisher", MaxSize = 255,
-        Value = "//datafield[@tag='260']/subfield[@code='b']"
-    },
-    {
-        Table = "Transaction",
-        Field ="ItemPlace", MaxSize = 255,
-        Value = "//datafield[@tag='260']/subfield[@code='a']"
+        Value = "//datafield[@tag='100' or @tag='110' or @tag='111']/subfield[@code='a' or @code='b']"
     },
     {
         Table = "Transaction",
         Field ="ItemDate", MaxSize = 50,
-        Value = "//datafield[@tag='260']/subfield[@code='c']"
+        Value = "//datafield[@tag='260']/subfield[@code='c']|//datafield[@tag='264']/subfield[@code='c']"
     },
     {
         Table = "Transaction",
         Field ="ItemEdition", MaxSize = 50,
-        Value = "//datafield[@tag='250']/subfield[@code='a']"
+        Value = "//datafield[@tag='300']"
     },
     {
+-- notes and boundwith information 
         Table = "Transaction",
-        Field ="ItemIssue", MaxSize = 255,
-        Value = "//datafield[@tag='773']/subfield[@code='g']"
+        Field ="ItemSubTitle", MaxSize = 255,
+        Value = "//datafield[@tag='990']|//datafield[@tag='992']|//datafield[@tag='993']"
+    },
+    {
+-- Volume/box - shirea 5/2021
+        Table = "Transaction",
+        Field ="ItemVolume", MaxSize = 255,
+        Value = "//datafield[@tag='988']/subfield[@code='p']|//datafield[@tag='988']/subfield[@code='b']"
+    },
+    {
+-- Series - shirea 5/2021
+        Table = "Transaction.CustomFields",
+        Field ="SeriesNumber", MaxSize = 255,
+        Value = "//datafield[@tag='830']"
+    },
+-- OCLC Number
+    {
+        Table = "Transaction.CustomFields",
+        Field = "OCLCNum", MaxSize = 255,
+        Value = "//datafield[@tag='035'][subfield[text()[contains(.,'(OCoLC)')]]][1]"
+    },
+-- DSpace URL
+    {
+        Table = "Transaction.CustomFields",
+        Field = "DspaceURL", MaxSize = 255,
+        Value = "//datafield[@tag='856'][subfield[text()[contains(.,'DSpace@MIT')]]]/subfield[@code='u']"
     }
 };
 
 -- Holding-level import fields. Value must be an XPath expression.
-    DataMapping.ImportFields.Holding["Default"] = {
+DataMapping.ImportFields.Holding["Default"] = {
 
 }
 
@@ -183,7 +198,7 @@ DataMapping.ImportFields.Item["Default"] = {
     },
     {
         Table = "Transaction",
-        Field = "SubLocation", MaxSize = 255,
-        Value = "Library"
+        Field = "ItemIssue", MaxSize = 255,
+        Value = "Description"
     }
 };

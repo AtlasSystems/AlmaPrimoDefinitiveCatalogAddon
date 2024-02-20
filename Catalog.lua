@@ -132,7 +132,8 @@ function Init()
     AlmaApi.ApiKey = settings.AlmaApiKey;
 
     -- Search when opened if autoSearch is true
-    local transactionNumber = GetFieldValue(DataMapping.SourceFields[product]["TransactionNumber"].Table, DataMapping.SourceFields[product]["TransactionNumber"].Field);
+    local fieldtype = GetFieldType();
+    local transactionNumber = GetFieldValue(DataMapping.SourceFields[product]["TransactionNumber"].Table, DataMapping.SourceFields[product]["TransactionNumber"][fieldtype]);
 
 	OnFormClosing:RegisterFormClosingEvent(interfaceMngr, StopRecordPageWatcher);
 
@@ -200,11 +201,12 @@ function GetAutoSearchInfo()
     local priorityList = settings.SearchPriorityList;
 
     log:Info("Determining autosearch type from search priority list.");
+    local fieldType = GetFieldType();
     for _, searchType in ipairs(priorityList) do
         if DataMapping.SearchTypes[searchType] and DataMapping.SearchTypes[searchType][product .. "SourceField"] ~= nil then
             
             local fieldDefinition = DataMapping.SearchTypes[searchType][product .. "SourceField"];
-            local fieldValue = GetFieldValue(fieldDefinition.Table, fieldDefinition.Field);
+            local fieldValue = GetFieldValue(fieldDefinition.Table, fieldDefinition[fieldType]);
 
             log:DebugFormat("Search type: {0}, field value: {1}", searchType, fieldValue);
             if fieldValue and fieldValue ~= "" then
@@ -234,10 +236,13 @@ function PerformSearch(searchInfo)
     end
 
     local fieldDefinition = DataMapping.SearchTypes[searchInfo[1]][product .. "SourceField"];
-    local searchTerm = GetFieldValue(fieldDefinition.Table, fieldDefinition.Field);
 
-    if searchTerm == nil then
-        searchTerm = "";
+    local fieldType = GetFieldType();
+    local searchTerm = GetFieldValue(fieldDefinition.Table, fieldDefinition[fieldType]);
+
+    if not searchTerm or searchTerm == "" then
+        log:Info("No value found in " .. product .. " field '" .. fieldDefinition[fieldType] .. ".' Search will not be performed.");
+        return;
     end
 
     local searchUrl = "";
@@ -705,35 +710,57 @@ function DoItemImport(sender, args)
     end;
 
     log:Info("Importing item values.");
-    local success, err = pcall(function()
+
+    local fieldType = GetFieldType();
+    local itemSuccess, itemErr = pcall(function()
         for _, target in ipairs(DataMapping.ImportFields.Item[importProfileName]) do
             local importValue = importRow:get_Item(target.Value);
 
-            log:DebugFormat("Importing value '{0}' to {1}", importValue, target.Field);
-            ImportField(target.Table, target.Field, importValue, target.MaxSize);
+            log:DebugFormat("Importing value '{0}' to {1}", importValue, target[fieldType]);
+
+            if not target[fieldType] or target[fieldType] == "" then
+                error(fieldType .. " cannot be null or an empty string.");
+            end
+
+            ImportField(target.Table, target[fieldType], importValue, target.MaxSize);
         end
     end);
-    if not success then
-        log:ErrorFormat("{0}. Import profiles may not be configured correctly. Please ensure that each import profile in DataMapping.lua corresponds to a set of item import fields.", TraverseError(err));
-        interfaceMngr:ShowMessage("Import profiles may not be configured correctly. Please ensure that each import profile in DataMapping.lua corresponds to a set of item import fields. See client log for details.", "Configuration Error");
+    if not itemSuccess then
+        log:ErrorFormat("{0}. Import profile may not be configured correctly. Please ensure that the import profile in DataMapping.lua corresponds to a set of item import fields and that each is a valid " .. product .. " field.", TraverseError(itemErr));
+        interfaceMngr:ShowMessage("Import profile may not be configured correctly. Please ensure that the import profile in DataMapping.lua corresponds to a set of item import fields and that each is a valid " .. product .. " field. See client log for details.", "Configuration Error");
     end
 
     local mmsId = importRow:get_Item("ReferenceNumber");
     local holdingId = importRow:get_Item("HoldingId");
 
-    local holdingInformation = GetMarcInformation(importProfileName, mmsId, holdingId);
-    local bibliographicInformation = GetMarcInformation(importProfileName, mmsId);
-
     log:Info("Importing bib values.");
-    for _, target in ipairs(bibliographicInformation) do
-        log:DebugFormat("Importing value '{0}' to {1}", target.Value, target.Field);
-        ImportField(target.Table, target.Field, target.Value, target.MaxSize);
+    local bibSuccess, bibErr = pcall(function()
+
+        local bibliographicInformation = GetMarcInformation(importProfileName, mmsId);
+        for _, target in ipairs(bibliographicInformation) do
+
+            ImportField(target.Table, target.Field, target.Value, target.MaxSize);
+        end
+    end);
+
+    if not bibSuccess then
+        log:ErrorFormat("{0}. Import profile may not be configured correctly. Please ensure that the import profile in DataMapping.lua corresponds to a set of bibliographic import fields and that each is a valid " .. product .. " field.", TraverseError(bibErr));
+        interfaceMngr:ShowMessage("Import profile may not be configured correctly. Please ensure that the import profile in DataMapping.lua corresponds to a set of bibliographic import fields and that each is a valid " .. product .. " field. See client log for details.", "Configuration Error");
     end
 
     log:Info("Importing holding values.");
-    for _, target in ipairs(holdingInformation) do
-        log:DebugFormat("Importing value '{0}' to {1}", target.Value, target.Field);
-        ImportField(target.Table, target.Field, target.Value, target.MaxSize);
+    local holdingSuccess, holdingErr = pcall(function()
+
+        local holdingInformation = GetMarcInformation(importProfileName, mmsId, holdingId);
+        for _, target in ipairs(holdingInformation) do
+
+            log:DebugFormat("Importing value '{0}' to {1}", target.Value, target[fieldType]);
+            ImportField(target.Table, target.Field, target.Value, target.MaxSize);
+        end
+    end);
+    if not holdingSuccess then
+        log:ErrorFormat("{0}. Import profile may not be configured correctly. Please ensure that the import profile in DataMapping.lua corresponds to a set of holding import fields and that each is a valid " .. product .. " field.", TraverseError(holdingErr));
+        interfaceMngr:ShowMessage("Import profile may not be configured correctly. Please ensure that the import profile in DataMapping.lua corresponds to a set of holding import fields and that each is a valid " .. product .. " field. See client log for details.", "Configuration Error");
     end
 
     cursor.Current = cursors.Default;
@@ -770,8 +797,13 @@ function GetMarcInformation(importProfileName, mmsId, holdingId)
                 mappingTable = DataMapping.ImportFields.Bibliographic[importProfileName];
             end
 
+            local fieldType = GetFieldType();
             for _, target in ipairs(mappingTable) do
-                if (target and target.Field and target.Field ~= "") then
+                if target then
+                    if not target[fieldType] or target[fieldType] == "" then
+                        error(fieldType .. " cannot be null or an empty string");
+                    end
+
                     local marcSets = Utility.StringSplit(',', target.Value );
 
                     -- Loops through the MARC sets array
@@ -796,7 +828,7 @@ function GetMarcInformation(importProfileName, mmsId, holdingId)
                                 fieldValue = Utility.Trim(fieldValue);
                             end
 
-                            AddMarcInformation(marcInformation, target.Table, target.Field, fieldValue, target.MaxSize);
+                            AddMarcInformation(marcInformation, target.Table, target[fieldType], fieldValue, target.MaxSize);
 
                             -- Need to break from MARC Set loop so the first record isn't overwritten
                             break;
@@ -813,6 +845,15 @@ end
 function AddMarcInformation(marcInformation, targetTable, targetField, fieldValue, targetMaxSize)
     local marcInfoEntry = {Table = targetTable, Field = targetField, Value = fieldValue, MaxSize = targetMaxSize}
     table.insert( marcInformation, marcInfoEntry );
+end
+
+function GetFieldType()
+    local fieldtype = "Field";
+    if product == "ILLiad" then
+        fieldtype = GetFieldValue("Transaction", "RequestType") .. "Field";
+    end
+
+    return fieldtype;
 end
 
 function OnError(err)

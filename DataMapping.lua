@@ -175,7 +175,7 @@ DataMapping.ImportFields.Bibliographic["AeonDefault"] = {
     {
         Table = "Transaction",
         Field = "ItemAuthor", MaxSize = 255,
-        Value = "//datafield[@tag='100']/subfield[@code='a']|//datafield[@tag='100']/subfield[@code='b'],//datafield[@tag='110']/subfield[@code='a']|//datafield[@tag='110']/subfield[@code='b'],//datafield[@tag='111']/subfield[@code='a']|//datafield[@tag='111']/subfield[@code='b']"
+        Value = "//datafield[@tag='100' or @tag='110' or @tag='111']/subfield[@code='a' or @code='b']"
     },
     {
         Table = "Transaction",
@@ -215,7 +215,7 @@ DataMapping.ImportFields.Bibliographic["ILLiadDefault"] = {
         Table = "Transaction",
         LoanField = "LoanAuthor", ArticleField = "PhotoItemAutor",
         MaxSize = 100,
-        Value = "//datafield[@tag='100']/subfield[@code='a']|//datafield[@tag='100']/subfield[@code='b'],//datafield[@tag='110']/subfield[@code='a']|//datafield[@tag='110']/subfield[@code='b'],//datafield[@tag='111']/subfield[@code='a']|//datafield[@tag='111']/subfield[@code='b']"
+        Value = "//datafield[@tag='100' or @tag='110' or @tag='111']/subfield[@code='a' or @code='b']"
     },
     {
         Table = "Transaction",
@@ -258,7 +258,7 @@ DataMapping.ImportFields.Bibliographic["AresDefault"] = {
     {
         Table = "Item",
         Field = "Author", MaxSize = 255,
-        Value = "//datafield[@tag='100']/subfield[@code='a']|//datafield[@tag='100']/subfield[@code='b'],//datafield[@tag='110']/subfield[@code='a']|//datafield[@tag='110']/subfield[@code='b'],//datafield[@tag='111']/subfield[@code='a']|//datafield[@tag='111']/subfield[@code='b']"
+        Value = "//datafield[@tag='100' or @tag='110' or @tag='111']/subfield[@code='a' or @code='b']"
     },
     {
         Table = "Item",

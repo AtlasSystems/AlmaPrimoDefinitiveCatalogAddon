@@ -133,11 +133,11 @@ function Init()
 
     -- Search when opened if autoSearch is true
     local fieldtype = GetFieldType();
-    local transactionNumber = GetFieldValue(DataMapping.SourceFields[product]["TransactionNumber"].Table, DataMapping.SourceFields[product]["TransactionNumber"][fieldtype]);
+    local identifier = GetFieldValue(DataMapping.SourceFields[product]["Identifier"].Table, DataMapping.SourceFields[product]["Identifier"][fieldtype]);
 
 	OnFormClosing:RegisterFormClosingEvent(interfaceMngr, StopRecordPageWatcher);
 
-    if settings.AutoSearch and transactionNumber and transactionNumber > 0 then
+    if settings.AutoSearch and identifier and identifier > 0 then
         log:Debug("Performing AutoSearch");
 
         PerformSearch({nil, nil});
@@ -764,7 +764,11 @@ function DoItemImport(sender, args)
     end
 
     cursor.Current = cursors.Default;
-    ExecuteCommand("SwitchTab", "Detail");
+    if product == "Ares" then
+        ExecuteCommand("SwitchTab", {"Details"});
+    else
+        ExecuteCommand("SwitchTab", "Detail");
+    end
 end
 
 function GetMarcInformation(importProfileName, mmsId, holdingId)

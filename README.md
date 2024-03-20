@@ -188,13 +188,14 @@ DataMapping.ImportProfiles["AresDefault"] = {
 ### Bibliographic Import
 The information within this data mapping is used to perform the bibliographic api call. The `Field` is the product field that the data will be imported into, `MaxSize` is the maximum character size the data going into the product field can be, and `Value` is the XPath query to the information.
 
->**Note:** One may specify multiple xPath queries for a single field by separating them with a comma. The addon will try each xPath query and returns the first successful one.
->
->*Example:* An author can be inside of `100$a and 100$b` or `110$a and 110$b`. To accomplish this, provide an xPath query for the 100 datafields and an xPath query for the 110 datafields separated by a comma.
->```
->//datafield[@tag='100']/subfield[@code='a']|//datafield[@tag='100']/subfield[@code='b'],
->//datafield[@tag='110']/subfield[@code='a']|//datafield[@tag='110']/subfield[@code='b']
->```
+>**Note:** Previously, the addon allowed one to specify multiple xPath queries for a single field by separating them with a comma. This prevented the use of Xpath expressions which contained commas, so the functionality was removed. Instead, one should use Xpath operators to specify multiple Xpath queries for a single field.
+for example, to import subfields 'a' and 'b' from either the MARC 100, 110, or 111 use:
+
+`//datafield[@tag='100' or @tag='110' or @tag='111']/subfield[@code='a' or @code='b']`.
+
+If you expect more than one of the MARC fields in the Xpath expression could exist simultaneously, you can use '[1]' notation to select the first matching node.
+
+`//datafield[@tag='100' or @tag='110' or @tag='111'][1]/subfield[@code='a' or @code='b']`
 
 *Default Configuration*
 

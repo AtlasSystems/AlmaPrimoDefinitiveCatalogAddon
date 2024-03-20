@@ -808,35 +808,30 @@ function GetMarcInformation(importProfileName, mmsId, holdingId)
                         error(fieldType .. " cannot be null or an empty string");
                     end
 
-                    local marcSets = Utility.StringSplit(',', target.Value );
+                    log:DebugFormat("XPath =: {0}", target.Value);
+                    log:DebugFormat("Target: {0}", target.Field);
+                    local datafieldNode = recordNode:SelectNodes(target.Value);
+                    log:DebugFormat("DataField Node Match Count: {0}", datafieldNode.Count);
 
-                    -- Loops through the MARC sets array
-                    for _, xPath in ipairs(marcSets) do
-                        log:DebugFormat("XPath: {0}", xPath);
-                        local datafieldNode = recordNode:SelectNodes(xPath);
-                        log:DebugFormat("DataField node matches: {0}", datafieldNode.Count);
+                    if (datafieldNode.Count > 0) then
+                        local fieldValue = "";
 
-                        if (datafieldNode.Count > 0) then
-                            local fieldValue = "";
-
-                            -- Loops through each data field node retured from xPath and concatenates them (generally only 1)
-                            for datafieldNodeIndex = 0, (datafieldNode.Count - 1) do
-                                local datafieldNodeValue = datafieldNode:Item(datafieldNodeIndex).InnerText;
-                                log:DebugFormat("Datafield node value: {0}", datafieldNodeValue);
-                                fieldValue = fieldValue .. " " .. datafieldNodeValue;
-                            end
-
-                            if(settings.RemoveTrailingSpecialCharacters) then
-                                fieldValue = Utility.RemoveTrailingSpecialCharacters(fieldValue);
-                            else
-                                fieldValue = Utility.Trim(fieldValue);
-                            end
-
-                            AddMarcInformation(marcInformation, target.Table, target[fieldType], fieldValue, target.MaxSize);
-
-                            -- Need to break from MARC Set loop so the first record isn't overwritten
-                            break;
+                        -- Loops through each data field node retured from xPath and concatenates them (generally only 1)
+                        for datafieldNodeIndex = 0, (datafieldNode.Count - 1) do
+                            log:DebugFormat("datafieldnode value is: {0}", datafieldNode:Item(datafieldNodeIndex).InnerText);
+                            fieldValue = fieldValue .. " " .. datafieldNode:Item(datafieldNodeIndex).InnerText;
                         end
+
+                        log:DebugFormat("target.Field: {0}", target.Field);
+                        log:DebugFormat("target.MaxSize: {0}", target.MaxSize);
+
+                        if(settings.RemoveTrailingSpecialCharacters) then
+                            fieldValue = Utility.RemoveTrailingSpecialCharacters(fieldValue);
+                        else
+                            fieldValue = Utility.Trim(fieldValue);
+                        end
+
+                        AddMarcInformation(marcInformation, target.Table, target.Field, fieldValue, target.MaxSize);
                     end
                 end
             end

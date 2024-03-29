@@ -736,6 +736,9 @@ function DoItemImport(sender, args)
         ImportField(target.Table, target.Field, target.Value, target.MaxSize);
     end
 
+    -- add permalink ams 7/2021
+    AddPermaLink();
+
     cursor.Current = cursors.Default;
     ExecuteCommand("SwitchTab", "Detail");
 end
@@ -772,47 +775,50 @@ function GetMarcInformation(importProfileName, mmsId, holdingId)
 
             for _, target in ipairs(mappingTable) do
                 if (target and target.Field and target.Field ~= "") then
-                    local marcSets = Utility.StringSplit(',', target.Value );
-
-                    -- Loops through the MARC sets array
-                    for _, xPath in ipairs(marcSets) do
-                        log:DebugFormat("XPath: {0}", xPath);
-                        local datafieldNode = recordNode:SelectNodes(xPath);
+                        log:DebugFormat("XPath: {0}", target.Value);
+                        log:DebugFormat("Target: {0}", target.Field);
+                        local datafieldNode = recordNode:SelectNodes(target.Value);
                         log:DebugFormat("DataField node matches: {0}", datafieldNode.Count);
 
-                        if (datafieldNode.Count > 0) then
-                            local fieldValue = "";
+                    if (datafieldNode.Count > 0) then
+                        local fieldValue = "";
 
-                            -- Loops through each data field node retured from xPath and concatenates them (generally only 1)
-                            for datafieldNodeIndex = 0, (datafieldNode.Count - 1) do
-                                local datafieldNodeValue = datafieldNode:Item(datafieldNodeIndex).InnerText;
-                                log:DebugFormat("Datafield node value: {0}", datafieldNodeValue);
-                                fieldValue = fieldValue .. " " .. datafieldNodeValue;
-                            end
-
-                            if(settings.RemoveTrailingSpecialCharacters) then
-                                fieldValue = Utility.RemoveTrailingSpecialCharacters(fieldValue);
-                            else
-                                fieldValue = Utility.Trim(fieldValue);
-                            end
-
-                            AddMarcInformation(marcInformation, target.Table, target.Field, fieldValue, target.MaxSize);
-
-                            -- Need to break from MARC Set loop so the first record isn't overwritten
-                            break;
+                        -- Loops through each data field node retured from xPath and concatenates them (generally only 1)
+                        for datafieldNodeIndex = 0, (datafieldNode.Count - 1) do
+                            local datafieldNodeValue = datafieldNode:Item(datafieldNodeIndex).InnerText;
+                            log:DebugFormat("Datafield node value: {0}", datafieldNodeValue);
+                            fieldValue = fieldValue .. " " .. datafieldNodeValue;
                         end
+
+                        if(settings.RemoveTrailingSpecialCharacters) then
+                            fieldValue = Utility.RemoveTrailingSpecialCharacters(fieldValue);
+                        else
+                            fieldValue = Utility.Trim(fieldValue);
+                        end
+
+                        AddMarcInformation(marcInformation, target.Table, target.Field, fieldValue, target.MaxSize);
+                        
                     end
                 end
             end
         end
     end
-
     return marcInformation;
 end
 
 function AddMarcInformation(marcInformation, targetTable, targetField, fieldValue, targetMaxSize)
     local marcInfoEntry = {Table = targetTable, Field = targetField, Value = fieldValue, MaxSize = targetMaxSize}
     table.insert( marcInformation, marcInfoEntry );
+end
+
+function AddPermaLink()
+    -- populate RecordURL field with a permalink to primo record.
+    log:Debug("adding Permalink");
+    local mmsId = GetMmsIds()
+    local permalink = settings.HomeUrl ..
+        '&query=any,contains,' .. mmsId[1]
+    log:DebugFormat("permalink: {0}", permalink)
+    SetFieldValue('Transaction.CustomFields', 'RecordURL', permalink);
 end
 
 function OnError(err)

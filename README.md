@@ -80,35 +80,67 @@ DataMapping.SearchTypes["Title"] = {
     PrimoField = "title",
     SearchStyle = "Query",
     AeonIcon = "srch_32x32",
-    AeonSourceField = { Table = "Transaction", Field = "ItemTitle" }
+    ILLiadIcon = "Search32",
+    AresIcon = "Search32",
+    AeonSourceField = { Table = "Transaction", Field = "ItemTitle" },
+    ILLiadSourceField = { Table = "Transaction", LoanField = "LoanTitle", ArticleField = "PhotoJournalTitle" },
+    AresSourceField = { Table = "Item", Field = "Title" }
 };
 DataMapping.SearchTypes["Author"] = {
     ButtonText = "Author",
     PrimoField = "creator",
     SearchStyle = "Query",
     AeonIcon = "srch_32x32",
-    AeonSourceField = { Table = "Transaction", Field = "ItemAuthor" }
+    ILLiadIcon = "Search32",
+    AresIcon = "Search32",
+    AeonSourceField = { Table = "Transaction", Field = "ItemAuthor" },
+    ILLiadSourceField = { Table = "Transaction", LoanField = "LoanAuthor", ArticleField = "PhotoItemAuthor" },
+    AresSourceField = { Table = "Item", Field = "Author" }
+};
+DataMapping.SearchTypes["Call Number"] = {
+    ButtonText = "Call Number",
+    PrimoField = "lsr01",
+    SearchStyle = "Query",
+    AeonIcon = "srch_32x32",
+    ILLiadIcon = "Search32",
+    AresIcon = "Search32",
+    AeonSourceField = { Table = "Transaction", Field = "CallNumber" },
+    ILLiadSourceField = { Table = "Trannsaction", LoanField = "CallNumber", ArticleField = "CallNumber" },
+    AresSourceField = { Table = "Item", Field = "Callnumber" }
 };
 DataMapping.SearchTypes["ISBN"] = {
     ButtonText = "ISBN",
     PrimoField = "isbn",
     SearchStyle = "Query",
     AeonIcon = "srch_32x32",
-    AeonSourceField = { Table = "Transaction", Field = "ItemISxN" }
+    ILLiadIcon = "Search32",
+    AresIcon = "Search32",
+    AeonSourceField = { Table = "Transaction", Field = "ItemISxN" },
+    ILLiadSourceField = { Table = "Transaction", LoanField = "ISSN", ArticleField = "ISSN" },
+    AresSourceField = { Table = "Item", Field = "ISXN" }
 };
 DataMapping.SearchTypes["ISSN"] = {
     ButtonText = "ISSN",
     PrimoField = "issn",
     SearchStyle = "Query",
     AeonIcon = "srch_32x32",
-    AeonSourceField = { Table = "Transaction", Field = "ItemISxN" }
+    ILLiadIcon = "Search32",
+    AresIcon = "Search32",
+    AeonSourceField = { Table = "Transaction", Field = "ItemISxN" },
+    ILLiadSourceField = { Table = "Transaction", LoanField = "ISSN", ArticleField = "ISSN" },
+    AresSourceField = { Table = "Item", Field = "ISXN" }
 };
+-- Catalog Number uses the Any search type because Primo catalogs don't have built in MMS ID searching.
 DataMapping.SearchTypes["Catalog Number"] = {
     ButtonText = "Catalog Number",
     PrimoField = "any",
     SearchStyle = "Query",
     AeonIcon = "srch_32x32",
-    AeonSourceField = { Table = "Transaction", Field = "ReferenceNumber" }
+    ILLiadIcon = "Search32",
+    AresIcon = "Search32",
+    AeonSourceField = { Table = "Transaction", Field = "ReferenceNumber" },
+    ILLiadSourceField = { Table = "Transaction", LoanField = "ReferenceNumber" , ArticleField = "ReferenceNumber" },
+    AresSourceField = { Table = "Item", Field = "ReferenceNumber" }
 };
 ```
 
@@ -117,13 +149,15 @@ DataMapping.SearchTypes["Catalog Number"] = {
 ### Source Fields
 The field that the addon reads from for values used by the addon that are not used in searches.
 
-#### Aeon
-
 *Default Configuration:*
 
 ```lua
 DataMapping.SourceFields["Aeon"] = {};
-DataMapping.SourceFields["Aeon"]["TransactionNumber"] = { Table = "Transaction", Field = "TransactionNumber" };
+DataMapping.SourceFields["Aeon"]["Identifier"] = { Table = "Transaction", Field = "TransactionNumber" };
+DataMapping.SourceFields["ILLiad"] = {};
+DataMapping.SourceFields["ILLiad"]["Identifier"] = { Table = "Transaction", LoanField = "TransactionNumber", ArticleField = "TransactionNumber" };
+DataMapping.SourceFields["Ares"] = {};
+DataMapping.SourceFields["Ares"]["Identifier"] = { Table = "Item", Field = "ItemID" }
 ```
 
 ### Import Profiles
@@ -132,10 +166,22 @@ Similar to SearchTypes, custom import profiles can be configured. Each import pr
 *Default Configuration:*
 
 ```lua
-DataMapping.ImportProfiles["Default"] = {
+DataMapping.ImportProfiles["AeonDefault"] = {
     ButtonText = "Import",
     Product = "Aeon",
     Icon = "impt_32x32"
+}
+
+DataMapping.ImportProfiles["ILLiadDefault"] = {
+    ButtonText = "Import",
+    Product = "ILLiad",
+    Icon = "Import32"
+}
+
+DataMapping.ImportProfiles["AresDefault"] = {
+    ButtonText = "Import",
+    Product = "Ares",
+    Icon = "Import32"
 }
 ```
 
@@ -143,7 +189,6 @@ DataMapping.ImportProfiles["Default"] = {
 The information within this data mapping is used to perform the bibliographic api call. The `Field` is the product field that the data will be imported into, `MaxSize` is the maximum character size the data going into the product field can be, and `Value` is the XPath query to the information.
 
 >**Note:** Previously, the addon allowed one to specify multiple xPath queries for a single field by separating them with a comma. This prevented the use of Xpath expressions which contained commas, so the functionality was removed. Instead, one should use Xpath operators to specify multiple Xpath queries for a single field.
-
 for example, to import subfields 'a' and 'b' from either the MARC 100, 110, or 111 use:
 
 `//datafield[@tag='100' or @tag='110' or @tag='111']/subfield[@code='a' or @code='b']`.
@@ -152,13 +197,138 @@ If you expect more than one of the MARC fields in the Xpath expression could exi
 
 `//datafield[@tag='100' or @tag='110' or @tag='111'][1]/subfield[@code='a' or @code='b']`
 
+*Default Configuration*
+
+```lua
+DataMapping.ImportFields.Bibliographic["AeonDefault"] = {
+    {
+        Table = "Transaction",
+        Field = "ItemTitle", MaxSize = 255,
+        Value = "//datafield[@tag='245']/subfield[@code='a']|//datafield[@tag='245']/subfield[@code='b']"
+    },
+    {
+        Table = "Transaction",
+        Field = "ItemAuthor", MaxSize = 255,
+        Value = "//datafield[@tag='100']/subfield[@code='a']|//datafield[@tag='100']/subfield[@code='b'],//datafield[@tag='110']/subfield[@code='a']|//datafield[@tag='110']/subfield[@code='b'],//datafield[@tag='111']/subfield[@code='a']|//datafield[@tag='111']/subfield[@code='b']"
+    },
+    {
+        Table = "Transaction",
+        Field = "ItemPublisher", MaxSize = 255,
+        Value = "//datafield[@tag='260']/subfield[@code='b']"
+    },
+    {
+        Table = "Transaction",
+        Field = "ItemPlace", MaxSize = 255,
+        Value = "//datafield[@tag='260']/subfield[@code='a']"
+    },
+    {
+        Table = "Transaction",
+        Field ="ItemDate", MaxSize = 50,
+        Value = "//datafield[@tag='260']/subfield[@code='c']"
+    },
+    {
+        Table = "Transaction",
+        Field = "ItemEdition", MaxSize = 50,
+        Value = "//datafield[@tag='250']/subfield[@code='a']"
+    },
+    {
+        Table = "Transaction",
+        Field = "ItemIssue", MaxSize = 255,
+        Value = "//datafield[@tag='773']/subfield[@code='g']"
+    }
+};
+
+DataMapping.ImportFields.Bibliographic["ILLiadDefault"] = {
+    {
+        Table = "Transaction",
+        LoanField = "LoanTitle", ArticleField = "PhotoJournalTitle",
+        MaxSize = 255,
+        Value = "//datafield[@tag='245']/subfield[@code='a']|//datafield[@tag='245']/subfield[@code='b']"
+    },
+    {
+        Table = "Transaction",
+        LoanField = "LoanAuthor", ArticleField = "PhotoItemAutor",
+        MaxSize = 100,
+        Value = "//datafield[@tag='100']/subfield[@code='a']|//datafield[@tag='100']/subfield[@code='b'],//datafield[@tag='110']/subfield[@code='a']|//datafield[@tag='110']/subfield[@code='b'],//datafield[@tag='111']/subfield[@code='a']|//datafield[@tag='111']/subfield[@code='b']"
+    },
+    {
+        Table = "Transaction",
+        LoanField = "LoanPublisher", ArticleField = "PhotoItemPublisher",
+        MaxSize = 40,
+        Value = "//datafield[@tag='260']/subfield[@code='b']"
+    },
+    {
+        Table = "Transaction",
+        LoanField = "LoanPlace", ArticleField = "PhotoItemPlace",
+        MaxSize = 30,
+        Value = "//datafield[@tag='260']/subfield[@code='a']"
+    },
+    {
+        Table = "Transaction",
+        LoanField = "LoanDate", ArticleField = "PhotoJournalYear",
+        MaxSize = 30,
+        Value = "//datafield[@tag='260']/subfield[@code='c']"
+    },
+    {
+        Table = "Transaction",
+        LoanField = "LoanEdition", ArticleField = "PhotoItemEdition",
+        MaxSize = 30,
+        Value = "//datafield[@tag='250']/subfield[@code='a']"
+    },
+    {
+        Table = "Transaction",
+        LoanField = "PhotoJournalIssue", ArticleField = "PhotoJournalIssue",
+        MaxSize = 30,
+        Value = "//datafield[@tag='773']/subfield[@code='g']"
+    }
+};
+
+DataMapping.ImportFields.Bibliographic["AresDefault"] = {
+    {
+        Table = "Item",
+        Field = "Title", MaxSize = 255,
+        Value = "//datafield[@tag='245']/subfield[@code='a']|//datafield[@tag='245']/subfield[@code='b']"
+    },
+    {
+        Table = "Item",
+        Field = "Author", MaxSize = 255,
+        Value = "//datafield[@tag='100']/subfield[@code='a']|//datafield[@tag='100']/subfield[@code='b'],//datafield[@tag='110']/subfield[@code='a']|//datafield[@tag='110']/subfield[@code='b'],//datafield[@tag='111']/subfield[@code='a']|//datafield[@tag='111']/subfield[@code='b']"
+    },
+    {
+        Table = "Item",
+        Field = "Publisher", MaxSize = 50,
+        Value = "//datafield[@tag='260']/subfield[@code='b']"
+    },
+    {
+        Table = "Item",
+        Field = "PubPlace", MaxSize = 30,
+        Value = "//datafield[@tag='260']/subfield[@code='a']"
+    },
+    {
+        Table = "Item",
+        Field ="PubDate", MaxSize = 50,
+        Value = "//datafield[@tag='260']/subfield[@code='c']"
+    },
+    {
+        Table = "Item",
+        Field = "Edition", MaxSize = 50,
+        Value = "//datafield[@tag='250']/subfield[@code='a']"
+    },
+    {
+        Table = "Item",
+        Field = "Issue", MaxSize = 255,
+        Value = "//datafield[@tag='773']/subfield[@code='g']"
+    }
+};
+```
+
 ### Item Import
 The information within this data mapping is used import the correct information from the items grid. The `Field` is the product field that the data will be imported into, `MaxSize` is the maximum character size the data going into the product field can be, and `Value` is the FieldName of the column within the item grid.
 
 *Default Configuration:*
 
 ```lua
-DataMapping.ImportFields.Item["Default"] = {
+DataMapping.ImportFields.Item["AeonDefault"] = {
     {
         Table = "Transaction",
         Field = "ReferenceNumber", MaxSize = 50,
@@ -183,6 +353,56 @@ DataMapping.ImportFields.Item["Default"] = {
         Table = "Transaction",
         Field = "SubLocation", MaxSize = 255,
         Value = "Library"
+    }
+};
+
+DataMapping.ImportFields.Item["ILLiadDefault"] = {
+    {
+        Table = "Transaction",
+        LoanField = "ReferenceNumber", ArticleField = "ReferenceNumber",
+        MaxSize = 50,
+        Value = "ReferenceNumber"
+    },
+    {
+        Table = "Transaction",
+        LoanField = "CallNumber", ArticleField = "CallNumber",
+        MaxSize = 100,
+        Value = "CallNumber"
+    },
+    {
+        Table = "Transaction",
+        LoanField = "ItemNumber", ArticleField = "ItemNumber",
+        MaxSize = 20,
+        Value = "Barcode"
+    },
+    {
+        Table = "Transaction",
+        LoanField = "Location", ArticleField = "Location",
+        MaxSize = 255,
+        Value = "Location"
+    }
+};
+
+DataMapping.ImportFields.Item["AresDefault"] = {
+    {
+        Table = "Item",
+        Field = "ReferenceNumber", MaxSize = 50,
+        Value = "ReferenceNumber"
+    },
+    {
+        Table = "Item",
+        Field = "Callnumber", MaxSize = 100,
+        Value = "CallNumber"
+    },
+    {
+        Table = "Item",
+        Field = "ItemBarcode", MaxSize = 50,
+        Value = "Barcode"
+    },
+    {
+        Table = "Item",
+        Field = "ShelfLocation", MaxSize = 100,
+        Value = "Location"
     }
 };
 ```
@@ -247,9 +467,13 @@ Atlas welcomes developers to extend the addon with additional support. All pull 
 
 * **Config.xml** - The addon configuration file.
 
-* **CatalogLayout_Browse.xml** - The layout file used when not retrieving items on a record page. Displays the full browser window.
+* **CatalogLayout_Browse_Chromium.xml** - The layout file used when not retrieving items on a record page. Displays the full browser window. This layout is used when the addon is using the Chromium embedded browser.
 
-* **CatalogLayout_Import.xml** - The layout file used when retrieving items on a record page (either automatically or via the Retrieve Items button). Displays the items grid at the bottom of the window.
+* **CatalogLayout_Import_Chromium.xml** - The layout file used when retrieving items on a record page (either automatically or via the Retrieve Items button). Displays the items grid at the bottom of the window. This layout is used when the addon is using the Chromium embedded browser.
+
+* **CatalogLayout_Browse_WebView2.xml** - The layout file used when not retrieving items on a record page. Displays the full browser window. This layout is used when the addon is using the WebView2 embedded browser.
+
+* **CatalogLayout_Import_WebView2.xml** - The layout file used when retrieving items on a record page (either automatically or via the Retrieve Items button). Displays the items grid at the bottom of the window. This layout is used when the addon is using the WebView2 embedded browser.
 
 * **DataMapping.lua** - The data mapping file contains mappings for the items that do not typically change from site to site.
 
@@ -262,4 +486,6 @@ Atlas welcomes developers to extend the addon with additional support. All pull 
 * **Utility.lua** - The Utility file is used for common lua functions.
 
 * **WebClient.lua** - Used for making web client requests.
+
+* **OnFormClosing.elf** - Used for ensuring the record page watcher is properly stopped and disposed of when the request form closes.
 * 

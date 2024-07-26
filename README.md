@@ -36,7 +36,7 @@ The addon is located within an request or item record of an Atlas Product. It is
 >
 >**PrimoSiteCode:** The code that identifies the site in Primo Deep Links. Ex: vid={PrimoSiteCode}
 >
->**IdSuffix:** The last four digits of MMS IDs and IE IDs for your institution. These can be found in the URL of any record opened from the results list.
+>**IdSuffix:** The last four digits of MMS IDs and IE IDs for your institution. These can be found in the URL of any record opened from the results list. This setting is required and should not be left blank.
 
 
 ## Buttons

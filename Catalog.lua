@@ -684,8 +684,13 @@ function PopulateItemsDataSources( response, itemsDataTable )
         itemRow = SetItemNodeFromXML(itemRow, bibData["mms_id"], "ReferenceNumber");
         itemRow = SetItemNodeFromXML(itemRow, holdingData["holding_id"], "HoldingId");
         itemRow = SetItemNodeFromXML(itemRow, holdingData["call_number"], "CallNumber");
-        itemRow = SetItemNodeFromCustomizedMapping(itemRow, itemData["location"], "Location", CustomizedMapping.Locations);
-        itemRow = SetItemNodeFromXML(itemRow, itemData["library"], "Library");
+        if (holdingData["in_temp_location"].InnerXml == "true") then
+            itemRow = SetItemNodeFromCustomizedMapping(itemRow, holdingData["temp_location"], "location", CustomizedMapping.Locations);
+            itemRow = SetItemNodeFromXML(itemRow, holdingData["temp_library"], "library");
+        else
+            itemRow = SetItemNodeFromCustomizedMapping(itemRow, itemData["location"], "Location", CustomizedMapping.Locations);
+            itemRow = SetItemNodeFromXML(itemRow, itemData["library"], "Library");
+        end;
         itemRow = SetItemNodeFromXML(itemRow, itemData["barcode"], "Barcode");
         itemRow = SetItemNodeFromXML(itemRow, itemData["description"], "Description");
 

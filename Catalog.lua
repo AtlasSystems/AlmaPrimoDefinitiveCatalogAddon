@@ -137,6 +137,12 @@ function Init()
 
 	OnFormClosing:RegisterFormClosingEvent(interfaceMngr, StopRecordPageWatcher);
 
+    if settings.IdSuffix == "" then
+        interfaceMngr:ShowMessage("The IdSuffix setting is blank. Please update your configuration to include a value for this setting.", "Configuration Error - Primo Definitive addon");
+        log:Error("The IdSuffix setting is blank. Please update your configuration to include a value for this setting.");
+        return;
+    end
+
     if settings.AutoSearch and identifier and identifier > 0 then
         log:Debug("Performing AutoSearch");
 

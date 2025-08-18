@@ -15,7 +15,7 @@ The addon is located within an request or item record of an Atlas Product. It is
 
 > **CatalogURL:** The base URL that the query strings are appended to. The Catalog URL structure is `{URL of the catalog}/primo-explore/` for Primo and `{URL of the catalog}/discovery/` for Primo VE.
 >
-> **HomeURL:** Home page of the catalog. The Home URL structure is `{URL of the catalog}/primo-explore/search?vid={Primo Site Code}` for Primo and `{URL of the catalog}/discovery/search?vid={Primo Site Code}` for Primo VE.
+> **HomeURL:** Home page of the catalog. The Home URL structure is `{URL of the catalog}/primo-explore/search?vid={Primo Site Code}` for Primo and `{URL of the catalog}/discovery/search?vid={Primo Site Code}:{Primo View Code}` for Primo VE.
 >
 > **AutoSearch:** Defines whether the search should be automatically performed when the form opens. *Default: `true`*
 >
@@ -34,7 +34,7 @@ The addon is located within an request or item record of an Atlas Product. It is
 >
 >**AlmaAPIKey:** API key used for interacting with the Alma API.
 >
->**PrimoSiteCode:** The code that identifies the site in Primo Deep Links. Ex: vid={PrimoSiteCode}
+>**PrimoSiteCode:** The code that identifies the site in Primo Deep Links. Ex: vid={PrimoSiteCode} For Primo VE, the Primo View Code (including the colon) is also included in this setting. Ex: vid={PrimoSiteCode}:{PrimoViewCode}
 >
 >**IdSuffix:** The last four digits of MMS IDs and IE IDs for your institution. These can be found in the URL of any record opened from the results list. This setting is required and should not be left blank.
 

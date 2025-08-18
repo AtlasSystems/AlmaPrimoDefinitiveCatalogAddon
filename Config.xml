@@ -2,7 +2,7 @@
 <Configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Name>Alma Primo Definitive Catalog Search</Name>
   <Author>Atlas Systems</Author>
-  <Version>1.2.2</Version>
+  <Version>1.2.3</Version>
   <Active>True</Active>
   <Type>Addon</Type>
   <Description>Catalog Search and Import Addon that uses Alma as the catalog and Primo or Primo VE as the discovery layer.</Description>
@@ -39,8 +39,8 @@
     <Setting name="AlmaAPIKey" value="" type="string">
       <Description>API key used for interacting with the Alma API.</Description>
     </Setting>
-    <Setting name="PrimoSiteCode" value="" type="string">
-      <Description>The code that identifies the site in Primo Deep Links. Ex: vid={PrimoSiteCode}</Description>
+    <Setting name="PrimoCode" value="" type="string">
+      <Description>The code that identifies the site in Primo Deep Links. Ex: vid={PrimoSiteCode} For Primo VE, the Primo View Code (including the colon) is also included in this setting. Ex: vid={PrimoSiteCode}:{PrimoViewCode}</Description>
     </Setting>
     <Setting name="IdSuffix" value="" type="string">
       <Description>The last four digits of MMS IDs and IE IDs for your institution. This setting is required and should not be left blank.</Description>

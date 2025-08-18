@@ -10,7 +10,7 @@ settings.AutoRetrieveItems = GetSetting("AutoRetrieveItems");
 settings.RemoveTrailingSpecialCharacters = GetSetting("RemoveTrailingSpecialCharacters");
 settings.AlmaApiUrl = GetSetting("AlmaAPIURL");
 settings.AlmaApiKey = GetSetting("AlmaAPIKey");
-settings.PrimoSiteCode = GetSetting("PrimoSiteCode");
+settings.PrimoCode = GetSetting("PrimoCode");
 settings.IdSuffix = GetSetting("IdSuffix");
 
 local interfaceMngr = nil;
@@ -252,13 +252,13 @@ function PerformSearch(searchInfo)
     end
 
     local searchUrl = "";
-    local encodedSiteCode = Utility.URLEncode(settings.PrimoSiteCode):gsub("%%", "%%%%");
+    local encodedSiteCode = Utility.URLEncode(settings.PrimoCode):gsub("%%", "%%%%");
     local encodedSearchType = Utility.URLEncode(DataMapping.SearchTypes[searchInfo[1]]["PrimoField"]):gsub("%%", "%%%%");
     local encodedSearchTerm = Utility.URLEncode(searchTerm):gsub("%%", "%%%%");
 
     --Construct the search url based on the base catalog url and search style.
     searchUrl = settings.CatalogUrl .. DataMapping.SearchStyleUrls[searchInfo[2]]
-    :gsub("{PrimoSiteCode}", encodedSiteCode)
+    :gsub("{PrimoCode}", encodedSiteCode)
     :gsub("{SearchType}", encodedSearchType)
     :gsub("{SearchTerm}", encodedSearchTerm);
     

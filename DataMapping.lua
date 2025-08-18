@@ -111,8 +111,8 @@ DataMapping.SearchTypes["Catalog Number"] = {
 -- Words in brackets will be replaced by their corresponding settings or values by the addon.
 -- Only one Query and one Browse style URL may be defined. These will be concatenated to the
     -- end of the CatalogUrl setting when searching.
-DataMapping.SearchStyleUrls["Query"] = "search?vid={PrimoSiteCode}&query={SearchType},contains,{SearchTerm},AND&tab=books&search_scope=default_scope&mode=advanced";
-DataMapping.SearchStyleUrls["Browse"] = "browse?vid={PrimoSiteCode}&browseQuery={SearchTerm}&browseScope={SearchType}&innerPnxIndex=-1&numOfUsedTerms=-1&fn=BrowseSearch";
+DataMapping.SearchStyleUrls["Query"] = "search?vid={PrimoCode}&query={SearchType},contains,{SearchTerm},AND&tab=books&search_scope=default_scope&mode=advanced";
+DataMapping.SearchStyleUrls["Browse"] = "browse?vid={PrimoCode}&browseQuery={SearchTerm}&browseScope={SearchType}&innerPnxIndex=-1&numOfUsedTerms=-1&fn=BrowseSearch";
 
 -- Source Fields: Aeon
 -- Only necessary for source fields not associated with a SearchType. To define source fields used in searches, 

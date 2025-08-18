@@ -34,7 +34,7 @@ The addon is located within an request or item record of an Atlas Product. It is
 >
 >**AlmaAPIKey:** API key used for interacting with the Alma API.
 >
->**PrimoSiteCode:** The code that identifies the site in Primo Deep Links. Ex: vid={PrimoSiteCode} For Primo VE, the Primo View Code (including the colon) is also included in this setting. Ex: vid={PrimoSiteCode}:{PrimoViewCode}
+>**PrimoSiteCode:** For Primo, the Primo Site Code that identifies the site in Primo Deep Links. Ex: `vid={PrimoSiteCode}` For Primo VE, the Primo View Code (including the colon) is also included in this setting. Ex: `vid={PrimoSiteCode}:{PrimoViewCode}`
 >
 >**IdSuffix:** The last four digits of MMS IDs and IE IDs for your institution. These can be found in the URL of any record opened from the results list. This setting is required and should not be left blank.
 
@@ -69,8 +69,8 @@ Below are the default configurations for the catalog addon. The mappings within 
 ### SearchTypes
 The search URL is constructed using the formulas defined in *DataMapping.SearchStyleUrls["Query"]* and *DataMapping.SearchStyleUrls["Browse"]*. The default configurations are as follows:
 
->Query: *`{Catalog URL}`search?vid=`{Primo Site Code}`&query=`{Search Type}`,contains,`{Search Term}`AND&search_scope=default_scope&mode=advanced*
->Browse: *`{Catalog URL}`browse?vid=`{Primo Site Code}`&browseQuery=`{Search Term}`&browseScope=`{Search Type}`&innerPnxIndex=-1&numOfUsedTerms=-1&fn=BrowseSearch"*
+>Query: *`{CatalogURL}`search?vid=`{PrimoCode}`&query=`{SearchType}`,contains,`{SearchTerm}`AND&search_scope=default_scope&mode=advanced*
+>Browse: *`{CatalogURL}`browse?vid=`{PrimoCode}`&browseQuery=`{SearchTerm}`&browseScope=`{SearchType}`&innerPnxIndex=-1&numOfUsedTerms=-1&fn=BrowseSearch"*
 
 *Default SearchTypes Configuration:*
 

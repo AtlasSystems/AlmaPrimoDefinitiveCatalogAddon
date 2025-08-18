@@ -40,7 +40,7 @@
       <Description>API key used for interacting with the Alma API.</Description>
     </Setting>
     <Setting name="PrimoCode" value="" type="string">
-      <Description>The code that identifies the site in Primo Deep Links. Ex: vid={PrimoSiteCode} For Primo VE, the Primo View Code (including the colon) is also included in this setting. Ex: vid={PrimoSiteCode}:{PrimoViewCode}</Description>
+      <Description>For Primo, the Primo Site Code that identifies the site in Primo Deep Links. Ex: vid={PrimoSiteCode} For Primo VE, the Primo View Code (including the colon) is also included in this setting. Ex: vid={PrimoSiteCode}:{PrimoViewCode}</Description>
     </Setting>
     <Setting name="IdSuffix" value="" type="string">
       <Description>The last four digits of MMS IDs and IE IDs for your institution. This setting is required and should not be left blank.</Description>

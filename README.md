@@ -34,7 +34,7 @@ The addon is located within an request or item record of an Atlas Product. It is
 >
 >**AlmaAPIKey:** API key used for interacting with the Alma API.
 >
->**PrimoSiteCode:** For Primo, the Primo Site Code that identifies the site in Primo Deep Links. Ex: `vid={PrimoSiteCode}` For Primo VE, the Primo View Code (including the colon) is also included in this setting. Ex: `vid={PrimoSiteCode}:{PrimoViewCode}`
+>**PrimoCode:** For Primo, the Primo Site Code that identifies the site in Primo Deep Links. Ex: `vid={Primo Site Code}` For Primo VE, the Primo View Code (including the colon) is also included in this setting. Ex: `vid={Primo Site Code}:{Primo View Code}`
 >
 >**IdSuffix:** The last four digits of MMS IDs and IE IDs for your institution. These can be found in the URL of any record opened from the results list. This setting is required and should not be left blank.
 

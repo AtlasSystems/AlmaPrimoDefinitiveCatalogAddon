@@ -2,6 +2,8 @@
 
 ## Versions
 
+**2.0.1 -** URL-based ID extraction now applies the same MMS ID (`99`) and IE ID (`[125]1`) prefix filter as the item-details scrape, preventing non-ID values in the URL's `docid` parameter from being treated as record IDs.
+
 **1.0 -** Initial release, based on original Alma Primo Catalog Search and Alma Primo VE Catalog Search addons.
 
 ## Summary

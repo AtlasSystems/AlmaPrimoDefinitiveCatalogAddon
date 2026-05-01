@@ -128,8 +128,7 @@ function Init()
     catalogSearchForm.Form:Show();
 
     -- Initializing the AlmaApi
-    AlmaApi.ApiUrl = settings.AlmaApiUrl;
-    AlmaApi.ApiKey = settings.AlmaApiKey;
+    AlmaApi.Initialize(settings.AlmaApiUrl, settings.AlmaApiKey);
 
     -- Search when opened if autoSearch is true
     local fieldtype = GetFieldType();
@@ -297,7 +296,7 @@ function ExtractIds(itemDetails)
     local urlId = (catalogSearchForm.Browser.Address):match("%d+" .. settings.IdSuffix);
     -- Easy way to prevent duplicates regardless of order since the keys get overwritten.
     -- In rare cases the URL won't contain an ID.
-    if urlId then
+    if urlId and (urlId:find("^99") or urlId:find("^[125]1")) then
         idMatches[urlId] = true;
     end
 
@@ -330,15 +329,20 @@ function ConvertIeIdsToMmsIds(ieIds)
     for i = 1, #ieIds do
         if ieIds[i]:find("^[125]1") then
             local bibResponse = AlmaApi.RetrieveBibs(ieIds[i], "ie_id");
-            local totalRecordCount = tonumber(bibResponse:SelectSingleNode("//@total_record_count").Value);
 
-            if totalRecordCount and totalRecordCount > 0 then
-                local mmsId = bibResponse:SelectSingleNode("bibs/bib/mms_id").InnerXml;
-                log:DebugFormat("MMS ID: {0}", mmsId);
-                if mmsId then
-                    log:DebugFormat("IE ID {0} -> MMS ID {1}", ieIds[i], mmsId);
-                    -- We want to avoid duplicates here as well.
-                    resolvedIds[mmsId] = true;
+            if bibResponse == nil then
+                log:WarnFormat("No bib response for IE ID {0}. Skipping.", ieIds[i]);
+            else
+                local totalRecordCount = tonumber(bibResponse:SelectSingleNode("//@total_record_count").Value);
+
+                if totalRecordCount and totalRecordCount > 0 then
+                    local mmsId = bibResponse:SelectSingleNode("bibs/bib/mms_id").InnerXml;
+                    log:DebugFormat("MMS ID: {0}", mmsId);
+                    if mmsId then
+                        log:DebugFormat("IE ID {0} -> MMS ID {1}", ieIds[i], mmsId);
+                        -- We want to avoid duplicates here as well.
+                        resolvedIds[mmsId] = true;
+                    end
                 end
             end
         else
@@ -562,30 +566,38 @@ function RetrieveItems()
 
             local holdingsResponse = holdingsXmlDocCache[mmsIds[i]];
 
-            -- Check if it has any holdings available
-            local totalHoldingCount = tonumber(holdingsResponse:SelectSingleNode("holdings/@total_record_count").Value);
-            local suppressedNodeList = holdingsResponse:SelectNodes("holdings/holding/suppress_from_publishing[text()='true']");
-            local suppressedHoldingsCount = tonumber(suppressedNodeList.Count);
+            if holdingsResponse == nil then
+                log:WarnFormat("No holdings response for MMS ID {0}. Skipping.", mmsIds[i]);
+            else
+                -- Check if it has any holdings available
+                local totalHoldingCount = tonumber(holdingsResponse:SelectSingleNode("holdings/@total_record_count").Value);
+                local suppressedNodeList = holdingsResponse:SelectNodes("holdings/holding/suppress_from_publishing[text()='true']");
+                local suppressedHoldingsCount = tonumber(suppressedNodeList.Count);
 
-            log:DebugFormat("Records available: {0} ({1} total, {2} suppressed)", totalHoldingCount - suppressedHoldingsCount, totalHoldingCount, suppressedHoldingsCount);
+                log:DebugFormat("Records available: {0} ({1} total, {2} suppressed)", totalHoldingCount - suppressedHoldingsCount, totalHoldingCount, suppressedHoldingsCount);
 
-            -- Retrieve Item Data if Holdings are available
-            if totalHoldingCount - suppressedHoldingsCount > 0 then
-                hasHoldings = true;
-                -- Get list of the holding ids
-                local holdingIds = GetHoldingIds(holdingsResponse);
+                -- Retrieve Item Data if Holdings are available
+                if totalHoldingCount - suppressedHoldingsCount > 0 then
+                    hasHoldings = true;
+                    -- Get list of the holding ids
+                    local holdingIds = GetHoldingIds(holdingsResponse);
 
-                for _, holdingId in ipairs(holdingIds) do
-                    log:DebugFormat("Holding ID: {0}", holdingId);
-                    -- Cache the response if it hasn't been cached
-                    if (itemsXmlDocCache[holdingId] == nil ) then
-                        log:DebugFormat("Caching items for {0}", mmsIds[i]);
-                        itemsXmlDocCache[holdingId] = AlmaApi.RetrieveItemsList(mmsIds[i], holdingId);
+                    for _, holdingId in ipairs(holdingIds) do
+                        log:DebugFormat("Holding ID: {0}", holdingId);
+                        -- Cache the response if it hasn't been cached
+                        if (itemsXmlDocCache[holdingId] == nil ) then
+                            log:DebugFormat("Caching items for {0}", mmsIds[i]);
+                            itemsXmlDocCache[holdingId] = AlmaApi.RetrieveItemsList(mmsIds[i], holdingId);
+                        end
+
+                        local itemsResponse = itemsXmlDocCache[holdingId];
+
+                        if itemsResponse == nil then
+                            log:WarnFormat("No items response for Holding ID {0}. Skipping.", holdingId);
+                        else
+                            PopulateItemsDataSources(itemsResponse, itemsDataTable);
+                        end
                     end
-
-                    local itemsResponse = itemsXmlDocCache[holdingId];
-
-                    PopulateItemsDataSources(itemsResponse, itemsDataTable);
                 end
             end
         end

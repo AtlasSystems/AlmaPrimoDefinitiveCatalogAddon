@@ -61,7 +61,15 @@ local function RetrieveItemsList(mmsId, holdingId)
 		local xmlSubresult = RetrieveItemsSublist(mmsId, holdingId, offset);
 
 		if xmlSubresult == nil then
-			log:WarnFormat("No items response for MMS ID {0}, Holding ID {1} (offset {2}).", mmsId, holdingId, offset);
+			if offset == 0 then
+				log:WarnFormat("No items response for MMS ID {0}, Holding ID {1}.", mmsId, holdingId);
+			else
+				-- Mid-pagination failure: returning the items we got so far. The xmlResult's
+				-- total_record_count attribute still claims the full count, so downstream sees
+				-- a truncated list with no UI indication.
+				log:ErrorFormat("Items pagination failed for MMS ID {0}, Holding ID {1} at offset {2}; returning {3} of {4} items.",
+					mmsId, holdingId, offset, itemsNode.ChildNodes.Count, totalItems);
+			end
 			return xmlResult;
 		end
 

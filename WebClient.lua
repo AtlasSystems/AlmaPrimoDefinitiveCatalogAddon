@@ -35,11 +35,13 @@ local function GetWebExceptionMessage(exception)
         if (exception.InnerException) then
             message = message .. "\r\n" .. GetWebExceptionMessage(exception.InnerException);
 
+            -- luanet returns the literal string "Response" when this property is unbound on the exception type.
             if exception.InnerException.Response and exception.InnerException.Response ~= "Response" then
-                -- This is necessary to get the response body from exceptions thrown by WebClients.
                 local streamReader = types["System.IO.StreamReader"](exception.InnerException.Response:GetResponseStream());
                 local responseContent = streamReader:ReadToEnd();
-                log:DebugFormat("Web exception response: {0}", Redact(responseContent));
+                if responseContent and #responseContent > 0 then
+                    message = message .. "\r\nResponse body: " .. responseContent;
+                end
             end
         end
     elseif exception then

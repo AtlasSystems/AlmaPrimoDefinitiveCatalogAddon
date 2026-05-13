@@ -2,6 +2,11 @@
 
 ## Versions
 
+**2.0.1 -**
+- URL-based ID extraction now applies the same MMS ID (`99`) and IE ID (`[125]1`) prefix filter as the item-details scrape, preventing non-ID values in the URL's `docid` parameter from being treated as record IDs.
+- Alma API key is redacted from logged URLs and exception bodies.
+- HTTP errors from Alma now surface the response status and XML error body in logs instead of being swallowed; failed API calls log and skip rather than crashing the form.
+
 **1.0 -** Initial release, based on original Alma Primo Catalog Search and Alma Primo VE Catalog Search addons.
 
 ## Summary

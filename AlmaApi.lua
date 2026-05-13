@@ -15,6 +15,12 @@ local log = types["log4net.LogManager"].GetLogger(rootLogger .. ".AlmaApi");
 
 AlmaApi = AlmaApiInternal;
 
+local function Initialize(apiUrl, apiKey)
+    AlmaApiInternal.ApiUrl = apiUrl;
+    AlmaApiInternal.ApiKey = apiKey;
+    WebClient.Initialize(apiKey);
+end
+
 local function RetrieveHoldingsList( mmsId )
     local requestUrl = AlmaApiInternal.ApiUrl .."bibs/"..
         Utility.URLEncode(mmsId) .."/holdings?apikey=" .. Utility.URLEncode(AlmaApiInternal.ApiKey);
@@ -50,10 +56,23 @@ end
 local function RetrieveItemsList(mmsId, holdingId)
 	local xmlResult, itemsNode;
 	local offset, totalItems = 0, 0;
-	
+
 	repeat
 		local xmlSubresult = RetrieveItemsSublist(mmsId, holdingId, offset);
-		
+
+		if xmlSubresult == nil then
+			if offset == 0 then
+				log:WarnFormat("No items response for MMS ID {0}, Holding ID {1}.", mmsId, holdingId);
+			else
+				-- Mid-pagination failure: returning the items we got so far. The xmlResult's
+				-- total_record_count attribute still claims the full count, so downstream sees
+				-- a truncated list with no UI indication.
+				log:ErrorFormat("Items pagination failed for MMS ID {0}, Holding ID {1} at offset {2}; returning {3} of {4} items.",
+					mmsId, holdingId, offset, itemsNode.ChildNodes.Count, totalItems);
+			end
+			return xmlResult;
+		end
+
 		if (xmlResult == nil) then
 			xmlResult = xmlSubresult;
 			itemsNode = xmlResult:SelectSingleNode("/items");
@@ -62,15 +81,15 @@ local function RetrieveItemsList(mmsId, holdingId)
 		else
 			--Merge the next subset results with the working list
 			local itemNodes = xmlSubresult:SelectNodes("/items/item");
-			
+
 			for i = 0, itemNodes.Count - 1 do
-				local nodeCopy = xmlResult:ImportNode(itemNodes:Item(i), true); 
+				local nodeCopy = xmlResult:ImportNode(itemNodes:Item(i), true);
 				itemsNode:AppendChild(nodeCopy);
 			end
 		end
-		
+
 		offset = offset + 100;
-	
+
 	until totalItems <= offset;
 
 	return xmlResult;
@@ -88,6 +107,7 @@ local function RetrieveHoldingsRecordInfo(mmsId, holdingId)
 end
 
 -- Exports
+AlmaApi.Initialize = Initialize;
 AlmaApi.RetrieveHoldingsList = RetrieveHoldingsList;
 AlmaApi.RetrieveBibs = RetrieveBibs;
 AlmaApi.RetrieveItemsList = RetrieveItemsList;

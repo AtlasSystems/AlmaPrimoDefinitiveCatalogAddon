@@ -273,8 +273,8 @@ function GetMmsIds()
         log:Debug("No IDs found in URL. Falling back to JSON-LD metadata.");
         local jsonLd = catalogSearchForm.Browser:EvaluateScript(
             [[(function(){
-                var el = document.querySelector('script[type="application/ld+json"]');
-                return el ? el.textContent : null;
+                var jsonLdElement = document.querySelector('script[type="application/ld+json"]');
+                return jsonLdElement ? jsonLdElement.textContent : null;
             })();]]).Result;
         if jsonLd then
             ids = ExtractIds(jsonLd);

@@ -268,12 +268,19 @@ end
 function GetMmsIds()
     log:DebugFormat("Retrieving IDs from {0}", catalogSearchForm.Browser.Address);
 
-    local itemDetails = catalogSearchForm.Browser:EvaluateScript([[document.getElementById("item-details").innerText;]]).Result;
-    local ids = {};
-    if itemDetails then
-        ids = ExtractIds(itemDetails);
-    else
-        log:Debug("Element with ID 'item-details' not found.");
+    local ids = ExtractIds(catalogSearchForm.Browser.Address);
+    if #ids == 0 then
+        log:Debug("No IDs found in URL. Falling back to JSON-LD metadata.");
+        local jsonLd = catalogSearchForm.Browser:EvaluateScript(
+            [[(function(){
+                var jsonLdElement = document.querySelector('script[type="application/ld+json"]');
+                return jsonLdElement ? jsonLdElement.textContent : null;
+            })();]]).Result;
+        if jsonLd then
+            ids = ExtractIds(jsonLd);
+        else
+            log:Debug("JSON-LD script block not found.");
+        end
     end
 
     if #ids > 0 then
@@ -291,20 +298,13 @@ function GetMmsIds()
     return {};
 end
 
-function ExtractIds(itemDetails)
+function ExtractIds(text)
     local idMatches = {};
-    local urlId = (catalogSearchForm.Browser.Address):match("%d+" .. settings.IdSuffix);
-    -- Easy way to prevent duplicates regardless of order since the keys get overwritten.
-    -- In rare cases the URL won't contain an ID.
-    if urlId and (urlId:find("^99") or urlId:find("^[125]1")) then
-        idMatches[urlId] = true;
-    end
 
     -- MMS Ids (and presumably IE IDs) all have the same last four digits specific to the institution.
     -- 99 is the prefix for MMS IDs, and IE IDs always have 1, 2, or 5 as their first digit and 1 as the second digit.
-
-    log:Info("Extracting IDs from item-details element.");
-    for id in itemDetails:gmatch("%d+" .. settings.IdSuffix) do
+    -- Table keys deduplicate matches when the same ID appears multiple times in the source text.
+    for id in text:gmatch("%d+" .. settings.IdSuffix) do
         if id:find("^99") or id:find("^[125]1") then
             log:DebugFormat("Found ID: {0}", id);
             idMatches[id] = true;
@@ -360,17 +360,11 @@ end
 
 function IsRecordPageLoaded()
     local pageUrl = catalogSearchForm.Browser.Address;
-    local itemDetailsScript = [[(function(){
-        var itemDetailsElement = document.getElementById("item-details");
-        if (itemDetailsElement != null){
-            return "True";
-        }
-        return "False";
-    })();]];
 
-    local itemDetails = catalogSearchForm.Browser:EvaluateScript(itemDetailsScript).Result == "True";
-
-    if pageUrl:find("fulldisplay%?") and itemDetails then
+    -- Record pages across classic Primo, Primo VE, and Primo NDE all use the
+    -- `fulldisplay?...&docid=alma{mmsId}` URL form. Gating on the URL alone
+    -- avoids depending on DOM elements that vary across discovery layers.
+    if pageUrl:find("fulldisplay%?") and pageUrl:find("docid=") then
         log:DebugFormat("Is a record page. {0}", pageUrl);
         ToggleItemsUIElements(true);
     else
